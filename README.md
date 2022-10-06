@@ -72,8 +72,24 @@ STEP 1b FLDIGI configuration:
 1) Make sure Fldigi XML-RPC external api is enabled and the ip and port set to 127.0.0.1 and 7362 respectively
 
 
+STEP 2a running from binary files
+=================================
 
-STEP 2 running from .py files
+Windows
+=======
+download saam_mail.exe and ICS_Form_Templates.tpl to your chosen folder
+
+run the program with: .\saam_mail.exe --opmode=fldigi
+
+Raspberry pi
+============
+download saam_mail and ICS_Form_Templates.tpl to your chosen folder
+change file to executeable: sudo chmod +x ./saam_mail
+
+run the program with: ./saam_mail --opmode=fldigi
+
+
+STEP 2b running from .py files
 =============================
 
     • download the saam-mail python files into your chosen directory
