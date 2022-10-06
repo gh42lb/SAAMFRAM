@@ -2467,7 +2467,7 @@ Cont-4/500,Cont-16/1K,OLIVIA-4/1K'.split(',')
                        title_color='Blue', tab_background_color='Dark Gray', background_color='Dark Gray', size=(940, 500), selected_title_color='Black', selected_background_color='White', key='tabgrp_main' )], [sg.Button('Exit')]]  
 
 
-    self.window = sg.Window("SAAM-MAIL de WH6GGO. v1.0 Beta", self.tabgrp, default_element_size=(40, 1), grab_anywhere=False, disable_close=True)                       
+    self.window = sg.Window("SAAM-MAIL de WH6GGO. v1.0.1 Beta", self.tabgrp, default_element_size=(40, 1), grab_anywhere=False, disable_close=True)                       
 
     return (self.window)
 

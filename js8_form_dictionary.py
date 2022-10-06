@@ -316,6 +316,7 @@ class FormDictionary(object):
 
 
   def readTemplateDictFromFile(self, filename):
+
     with open(filename) as f:
       data = f.read()
   
@@ -407,10 +408,17 @@ class FormDictionary(object):
 
   def readRelayboxDictFromFile(self, filename):
 
-    with open(filename) as f:
-      data = f.read()
+    try:
+      with open(filename) as f:
+        data = f.read()
+
+      self.relaybox_file_dictionary_data = json.loads(data)
+
+    except:
+      self.debug.error_message("Exception in readRelayboxDictFromFile: " + str(sys.exc_info()[0]) + str(sys.exc_info()[1] ))
+      self.relaybox_file_dictionary_data = {}
+
   
-    self.relaybox_file_dictionary_data = json.loads(data)
 
     self.group_arq.clearRelaybox()
 
@@ -517,10 +525,16 @@ class FormDictionary(object):
 
   def readOutboxDictFromFile(self, filename):
 
-    with open(filename) as f:
-      data = f.read()
+    try:
+      with open(filename) as f:
+        data = f.read()
   
-    self.outbox_file_dictionary_data = json.loads(data)
+      self.outbox_file_dictionary_data = json.loads(data)
+
+    except:
+      self.debug.error_message("Exception in readOutboxDictFromFile: " + str(sys.exc_info()[0]) + str(sys.exc_info()[1] ))
+      self.outbox_file_dictionary_data = {}
+
 
     self.group_arq.clearOutbox()
 
@@ -637,10 +651,16 @@ class FormDictionary(object):
 
   def readInboxDictFromFile(self, filename):
 
-    with open(filename) as f:
-      data = f.read()
+    try:
+      with open(filename) as f:
+        data = f.read()
   
-    self.inbox_file_dictionary_data = json.loads(data)
+      self.inbox_file_dictionary_data = json.loads(data)
+
+    except:
+      self.debug.error_message("Exception in readInboxDictFromFile: " + str(sys.exc_info()[0]) + str(sys.exc_info()[1] ))
+      self.inbox_file_dictionary_data = {}
+
 
     self.group_arq.clearInbox()
 
@@ -758,10 +778,17 @@ class FormDictionary(object):
 
   def readSentDictFromFile(self, filename):
 
-    with open(filename) as f:
-      data = f.read()
+    try:
+      with open(filename) as f:
+        data = f.read()
   
-    self.sentbox_file_dictionary_data = json.loads(data)
+      self.sentbox_file_dictionary_data = json.loads(data)
+
+    except:
+      self.debug.error_message("Exception in readSentDictFromFile: " + str(sys.exc_info()[0]) + str(sys.exc_info()[1] ))
+      self.sentbox_file_dictionary_data = {}
+
+
 
     self.group_arq.clearSentbox()
 
