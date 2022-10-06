@@ -88,57 +88,38 @@ class FLDIGI_Client(object):
     first two digits are character timings to determine if signal being received
     second two are no data timings
     third two are diif after end of transmit timings
+    the last number is the relative timing for a test message in seconds.
     """
     self.timing_lookup = {
-                           'PSK1000RC2'  : '1,300,6,4000,12,8000,2400,MODE 1 - PSK1000RC2', #13,  #WORKS VERY WELL ABSOLUTELY UNBELEIVABLE!!!
-                           'PSK500RC4'   : '1,300,6,4000,12,8000,2600,MODE 2 - PSK500RC4', #13  #WORKS VERY WELL 
-                           'PSK800RC2'   : '1,300,6,4000,12,8000,1900,MODE 3 - PSK800RC2', #15  #WORKS VERY WELL REALLY AWESOME
-                           'PSK250RC6'   : '1,300,6,4000,12,8000,2000,MODE 4 - PSK250RC6', #16  #WORKS VERY WELL LITERALLY AWESOME!!!!!!!!!!!!!!!!!!!!!!!!!!
-                           'QPSK500'     : '1,500,5,3000,12,3000,500,MODE 5 - QPSK500', #16 #THIS MODE WORKS VERY WELL DO NOT ADJUST TIMINGS !!!
-                           'PSK500RC3'   : '1,300,6,4000,12,8000,1900,MODE 6 - PSK500RC3', #16,  #WORKS VERY WELL REALLY AWESOME LITERALLY AMAZING
-                           'PSK250RC5'   : '1,300,6,4000,12,8000,1650,MODE 7 - PSK250RC5', #18  #WORKS VERY WELL LITERALLY AWESOME!!!!!!!!!!!!!!!!!!!!!!!!!!
-                           'BPSK500'     : '1,300,5,5000,10,6000,500,MODE 8 - BPSK500', #19  #THIS MODE WORKS VERY WELL DO NOT ADJUST TIMINGS!!!
-                           'PSK1000R'    : '1,300,6,4000,12,8000,1000,MODE 9 - PSK1000R', #19  #WORKS VERY EWLL
-                           'PSK500RC2'   : '1,300,6,4000,12,8000,1200,MODE 10 - PSK500RC2', #20  #WORKS VERY WELL REALLY AWESOME
-                           'DOMX88'      : '1,500,4,3000,12,6000,1500,MODE 11 - DOMX88', #23  #THIS MODE WORKS WELL TIMINGS ARE GOOD
-                           'PSK250RC3'   : '1,300,6,4000,12,8000,900,MODE 12 - PSK250RC3', #23  #WORKS VERY WELL
-                           '8PSK125'     : '1,300,6,4000,12,8000,125,MODE 13 - 8PSK125', #23  #WORKS VERY WELL
-                           '8PSK250F'    : '1,300,6,4000,12,8000,250,MODE 14 - 8PSK250F', #24  #THIS MODE WORKS WELL ALTHOUGH PROCESSING LATENCY IN FLDIGI
-                           '8PSK250FL'   : '1,300,6,4000,12,8000,250,MODE 15 - 8PSK250FL', #24 # THIS MODE WORKS VERY WELL SOME PROCESSING LATENCY IN FLDIGI
-                           'PSK500R'     : '1,300,6,4000,12,8000,500,MODE 16 - PSK500R', #31  #WORKS VERY WELL
-                           'PSK250RC2'   : '1,300,6,4000,12,8000,600,MODE 17 - PSK250RC2', #32  #WORKS VERY WELL
-                           'QPSK250'     : '1,500,5,3000,12,3000,250,MODE 18 - QPSK250', #32  #WORKS VERY WELL
-                           'BPSK250'     : '1,500,5,3000,10,4000,250,MODE 19 - BPSK250', #32 #WORKS VERY WELL
-                           'PSK125RC4'   : '1,300,6,4000,12,8000,650,MODE 20 - PSK125RC4', #33  #WORKS VERY WELL
-                           'DOMX44'      : '1,500,4,3000,12,6000,1550,MODE 21 - DOMX44', #40  #THIS MODE WORKS WELL
-                           '8PSK125FL'   : '1,300,6,4000,12,8000,125,MODE 22 - 8PSK125FL', #40  #WORKS VERY WELL
-                           '8PSK125F'    : '1,300,6,4000,12,8000,125,MODE 23 - 8PSK125F', #41  #WORKS VERY WELL
-                           'PSK250R'     : '1,300,6,4000,12,8000,250,MODE 24 - PSK250R', #54  #WORKS VERY WELL
-                           'PSK63RC4'    : '1,300,6,4000,12,8000,320,MODE 25 - PSK63RC4', #54  #WORKS VERY WELL
-                           'DOMX22'      : '1,500,6,6000,12,6000,380,MODE 26 - DOMX22', #74  #WORKS VERY WELL
-                           'OLIVIA-4/1K' : '1,300,6,4000,12,8000,750,MODE 27 - OLIVIA-4/1K', #89 #WORKS VERY WELL WITH THESE SETTINGS
-                           'DOMX16'      : '1,500,6,6000,12,6000,280,MODE 28 - DOMX16', #101  #WORKS VERY WELL
+                           'PSK1000RC2'  : '1,300,6,4000,12,8000,2400,MODE 1 - PSK1000RC2',  #13
+                           'PSK500RC4'   : '1,300,6,4000,12,8000,2600,MODE 2 - PSK500RC4',   #13
+                           'PSK800RC2'   : '1,300,6,4000,12,8000,1900,MODE 3 - PSK800RC2',   #15
+                           'PSK250RC6'   : '1,300,6,4000,12,8000,2000,MODE 4 - PSK250RC6',   #16
+                           'QPSK500'     : '1,500,5,3000,12,3000,500,MODE 5 - QPSK500',      #16
+                           'PSK500RC3'   : '1,300,6,4000,12,8000,1900,MODE 6 - PSK500RC3',   #16
+                           'PSK250RC5'   : '1,300,6,4000,12,8000,1650,MODE 7 - PSK250RC5',   #18
+                           'BPSK500'     : '1,300,5,5000,10,6000,500,MODE 8 - BPSK500',      #19
+                           'PSK1000R'    : '1,300,6,4000,12,8000,1000,MODE 9 - PSK1000R',    #19
+                           'PSK500RC2'   : '1,300,6,4000,12,8000,1200,MODE 10 - PSK500RC2',  #20
+                           'DOMX88'      : '1,500,4,3000,12,6000,1500,MODE 11 - DOMX88',     #23
+                           'PSK250RC3'   : '1,300,6,4000,12,8000,900,MODE 12 - PSK250RC3',   #23
+                           '8PSK125'     : '1,300,6,4000,12,8000,125,MODE 13 - 8PSK125',     #23
+                           '8PSK250F'    : '1,300,6,4000,12,8000,250,MODE 14 - 8PSK250F',    #24
+                           '8PSK250FL'   : '1,300,6,4000,12,8000,250,MODE 15 - 8PSK250FL',   #24
+                           'PSK500R'     : '1,300,6,4000,12,8000,500,MODE 16 - PSK500R',     #31
+                           'PSK250RC2'   : '1,300,6,4000,12,8000,600,MODE 17 - PSK250RC2',   #32
+                           'QPSK250'     : '1,500,5,3000,12,3000,250,MODE 18 - QPSK250',     #32
+                           'BPSK250'     : '1,500,5,3000,10,4000,250,MODE 19 - BPSK250',     #32
+                           'PSK125RC4'   : '1,300,6,4000,12,8000,650,MODE 20 - PSK125RC4',   #33
+                           'DOMX44'      : '1,500,4,3000,12,6000,1550,MODE 21 - DOMX44',     #40
+                           '8PSK125FL'   : '1,300,6,4000,12,8000,125,MODE 22 - 8PSK125FL',   #40
+                           '8PSK125F'    : '1,300,6,4000,12,8000,125,MODE 23 - 8PSK125F',    #41
+                           'PSK250R'     : '1,300,6,4000,12,8000,250,MODE 24 - PSK250R',     #54
+                           'PSK63RC4'    : '1,300,6,4000,12,8000,320,MODE 25 - PSK63RC4',    #54
+                           'DOMX22'      : '1,500,6,6000,12,6000,380,MODE 26 - DOMX22',      #74
+                           'OLIVIA-4/1K' : '1,300,6,4000,12,8000,750,MODE 27 - OLIVIA-4/1K', #89
+                           'DOMX16'      : '1,500,6,6000,12,6000,280,MODE 28 - DOMX16',      #101
                           }
-  """ 
-  these modes did not make the cut for one reason or another...
-
-                           'PSK250RC7'   : '1,300,6,4000,12,8000',  #WORKS VERY WELL SEEMD TO GET STUCK ON VERIFYING SOME FRAGMENTS????
-                           'OLIVIA-4/2K' : '1,300,6,4000,12,8000',  #WORKS WELL BUT LOTS OF PROCESSING LATENCY
-
-                           'THOR50x1'    : '1,300,6,4000,12,8000',   
-                           'OFDM500F'    : '1,500,15,13000,16,12000', 
-                           'OFDM750F'    : '1,300,15,13000,16,12000', 
-                           'PSK500C2'    : '1,200,2,1000,10,1500',  
-                           'PSK125RC5'   : '1,300,6,4000,12,8000', 
-                           'PSK63RC10'   : '1,500,4,3000,12,6000',  
-                           '8PSK250'     : '1,300,6,4000,12,8000', 
-                           '8PSK500F'    : '1,300,6,4000,12,8000', 
-                           'IFKP'        : '2,800,6,6000,12,6000', 
-                           '8PSK500'     : '1,500,5,3000,12,3000', 
-                           'Cont-4/500'  : '1,500,2,1000,10,1500', 
-                           '8PSK250'     : '1,500,2,1000,10,1500', 
-
-  """
 
   def setRigName(self, rigname):
     self.rigname = rigname
@@ -161,13 +142,19 @@ class FLDIGI_Client(object):
 
   def appendToLastTwenty(self, msg):
     last_twenty_chars = self.last_twenty_chars + msg
-    self.last_twenty_chars = last_twenty_chars[-30:]
+    self.last_twenty_chars = last_twenty_chars[-60:]
 
   def resetLastTwenty(self):
     self.last_twenty_chars = ''
     return
 
+  def getLastTwenty(self):
+    return self.last_twenty_chars
+
   def testLastTwenty(self, msg):
+
+    self.debug.info_message("testLastTwenty. set to: " + str(self.last_twenty_chars) )
+
     if(msg in self.last_twenty_chars):
       return True
     else:
@@ -197,8 +184,9 @@ class FLDIGI_Client(object):
     self.server = server
     if(self.connected == False):
       try:
-        self.server = xmlrpc.client.ServerProxy('http://localhost:7362')
-        self.debug.info_message("method connect CONNECTING to " + str(server) )
+        address, port = server
+        self.server = xmlrpc.client.ServerProxy('http://' + address + ':' + str(port) )
+        self.debug.info_message("method connect CONNECTING to " + 'http://' + address + ':' + str(port) )
         self.connected = True
 
         self.server.main.set_txid(True)
@@ -215,12 +203,6 @@ class FLDIGI_Client(object):
         self.debug.info_message("AFC search range: " + str(afc_search_range) )
 
         self.server.main.set_afc(True)
-
-        #self.server.modem.set_afc_search_range(3000)
-        #self.server.main.set_squelch_level(0.0)
-        #self.server.main.set_squelch(False)
-        #squelch_level = self.server.main.get_squelch_level()
-        #self.debug.info_message("squelch level: " + str(squelch_level) )
 
       except:
         time.sleep(5)
@@ -262,7 +244,6 @@ class FLDIGI_Client(object):
       self.server.main.abort()
       self.server.main.rx()
       self.server.text.clear_tx()
-      self.server.text.clear_rx()
   
   def testRcvSignalStopped2(self):
     if(self.getNoDataCounter() > 1):
@@ -303,9 +284,6 @@ class FLDIGI_Client(object):
       try:
         self.modem_name = self.server.modem.get_name()
         self.debug.info_message("FLDIGI MODEM NAME IS: " + self.modem_name )
-
-        #self.modem_bandwidth = self.server.modem.get_bandwidth('DOMX16')
-        #self.debug.info_message("FLDIGI MODEM BANDWIDTH: " + str(self.modem_bandwidth) )
 
         self.timings = self.timing_lookup.get(self.modem_name).split(',') 
 

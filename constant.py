@@ -82,6 +82,12 @@ COMM_QRYACK_MSG    = ' ACK? '
 COMM_QRYSAAM_MSG   = ' SAAM? '
 COMM_SAAM_MSG      = ' SAAM '
 COMM_REQM_MSG      = ' REQM '
+COMM_SAAMQRT_MSG   = ' SAAM QRT '
+COMM_CONF_MSG      = ' CONF '
+COMM_QRYRDY_MSG    = ' RDY? '
+COMM_RR_MSG        = ' RR '
+COMM_NR_MSG        = ' NR '
+COMM_CCL_MSG       = ' CCL '
 
 COMM_NONE          = 0
 COMM_LISTEN        = 1
@@ -141,3 +147,12 @@ WHAT_WHERE_NONE     = 0
 FRAGMENTS_TO_GROUP  = 1
 FRAGMENTS_TO_ME     = 2
 QRYACKNACK_TO_ME    = 3
+
+
+NO_BOX       = 0
+UNKNOWN_BOX  = 0
+IN_BOX       = 1
+OUT_BOX      = 2
+SENT_BOX     = 3
+RELAY_BOX    = 4
+

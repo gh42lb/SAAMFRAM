@@ -359,8 +359,15 @@ class NetGarq(object):
     self.messages_relaybox = []	  
     return
 
-  def addMessageToRelaybox(self, msgfrom, msgto, subject, timestamp, priority, msgtype,  msgid, conf_rcvd, frag_size):
-    self.messages_relaybox.append([msgfrom, msgto, subject, timestamp, priority, msgtype, msgid, conf_rcvd, frag_size])
+  def addMessageToRelaybox(self, msgfrom, msgto, subject, timestamp, priority, msgtype,  msgid, conf_rcvd, frag_size, verified):
+
+    for x in range(len(self.messages_relaybox)):
+      if(self.messages_relaybox[x][6] == msgid):
+        self.messages_relaybox.remove(self.messages_relaybox[x])
+        self.messages_relaybox.append([msgfrom, msgto, subject, timestamp, priority, msgtype, msgid, conf_rcvd, frag_size, verified])
+        return self.messages_relaybox
+
+    self.messages_relaybox.append([msgfrom, msgto, subject, timestamp, priority, msgtype, msgid, conf_rcvd, frag_size, verified])
     return self.messages_relaybox
 
   def deleteMessageFromRelaybox(self, msgid):
@@ -382,11 +389,14 @@ class NetGarq(object):
 
     for x in range (len(self.messages_relaybox)):
       lineitem = self.messages_relaybox[x]
-      selected = lineitem[7]
+      selected = lineitem[9]
+
       if(selected == 'Verified'):
         selected_colors.append([x, 'green1'])
-      else:
+      elif(selected == 'Stub'):
         selected_colors.append([x, 'red'])
+      elif(selected == 'Partial'):
+        selected_colors.append([x, 'blue'])
 
     return selected_colors
 
@@ -419,7 +429,14 @@ class NetGarq(object):
     self.messages_inbox = []	  
     return
 
+
   def addMessageToInbox(self, msgfrom, msgto, subject, timestamp, priority, msgtype, verified, msgid):
+    for x in range(len(self.messages_inbox)):
+      if(self.messages_inbox[x][7] == msgid):
+        self.messages_inbox.remove(self.messages_inbox[x])
+        self.messages_inbox.append([msgfrom, msgto, subject, timestamp, priority, msgtype, verified, msgid])
+        return self.messages_inbox
+
     self.messages_inbox.append([msgfrom, msgto, subject, timestamp, priority, msgtype, verified, msgid])
     return self.messages_inbox
 
@@ -443,10 +460,12 @@ class NetGarq(object):
     for x in range (len(self.messages_inbox)):
       lineitem = self.messages_inbox[x]
       selected = lineitem[6]
-      if(selected == 'yes'):
+      if(selected == 'Verified'):
         selected_colors.append([x, 'green1'])
-      else:
+      elif(selected == 'Stub'):
         selected_colors.append([x, 'red'])
+      elif(selected == 'Partial'):
+        selected_colors.append([x, 'blue'])
 
     return selected_colors
 
@@ -485,7 +504,6 @@ class NetGarq(object):
         print ('used = Used in current solution?')
 
 
-  #FIXME
   def getMsgRig1(self):
     data = ''
     if(self.operating_mode == cn.FLDIGI or self.operating_mode == cn.JSDIGI):
@@ -494,7 +512,6 @@ class NetGarq(object):
     #  data = self.js8client.getMsg()
     return data
 
-  #FIXME
   def testReceiveStringRig1(self, teststr):
     if(self.operating_mode == cn.FLDIGI or self.operating_mode == cn.JSDIGI):
       return self.fldigiclient.testReceiveString(teststr)
@@ -506,18 +523,13 @@ class NetGarq(object):
       return self.fldigiclient.testRcvSignalStopped()
     elif(self.operating_mode == cn.JS8CALL or self.operating_mode == cn.JSDIGI):
       return False
-
-   
-
       
-  #FIXME
   def appendReceiveStringRig1(self, data):
     if(self.operating_mode == cn.FLDIGI or self.operating_mode == cn.JSDIGI):
       self.fldigiclient.appendReceiveString(data)
     elif(self.operating_mode == cn.JS8CALL or self.operating_mode == cn.JSDIGI):
       self.js8client.appendReceiveString(data)
 
-  #FIXME
   def getReceiveStringRig1(self):
     if(self.operating_mode == cn.FLDIGI or self.operating_mode == cn.JSDIGI):
       return self.fldigiclient.getReceiveString()
@@ -532,13 +544,9 @@ class NetGarq(object):
       		
 
   def setSpeed(self, speed):
-    #self.js8client.sendMsg("MODE.SET_SPEED", "", params={"SPEED":int(speed), "_ID":-1})
-    self.js8client.sendMsg("TX.SET_TEXT", '')
+    #self.js8client.sendMsg("TX.SET_TEXT", '')
     self.js8client.sendMsg("MODE.SET_SPEED", "", params={"SPEED":int(speed), "_ID":-1} )
-    #self.js8client.sendMsg("RIG.SET_FREQ", "", params={"DIAL":7095000, "OFFSET":1000, "_ID":-1})
-    self.js8client.sendMsg("TX.SET_TEXT", '')
-
-    #self.js8client.sendMsg("MODE.GET_SPEED", "", params={"SPEED":2, "_ID":-1})
+    #self.js8client.sendMsg("TX.SET_TEXT", '')
     return()
 
   def getSpeed(self):
@@ -563,18 +571,9 @@ class NetGarq(object):
     self.debug.info_message("JS8Call sendItNow. message: " + message)
     """need to blank the message box first so that send engages correctly"""
 
-    #FIXME TEST
-    #self.js8client.sendMsg("MODE.SET_SPEED", "", params={"SPEED":cn.JS8CALL_SPEED_NORMAL, "_ID":-1})
-    #self.js8client.sendMsg("RIG.SET_FREQ", "", params={"DIAL":'7095000', "OFFSET":'800', "_ID":-1})
-    #self.js8client.sendMsg("MODE.GET_SPEED", "", params={"SPEED":cn.JS8CALL_SPEED_NORMAL, "_ID":-1})
     self.getSpeed()
-
     self.js8client.sendMsg("TX.SET_TEXT", '')
     self.js8client.sendMsg("TX.SEND_MESSAGE", message)
-
-    #FIXME TEST
-    #self.js8client.sendMsg("MODE.SET_SPEED", "", params={"SPEED":cn.JS8CALL_SPEED_NORMAL})
-    #self.js8client.sendMsg("TX.SEND_MESSAGE", message, params={"SPEED":cn.JS8CALL_SPEED_NORMAL, "_ID":-1})
 
     return ()
 
@@ -583,8 +582,7 @@ class NetGarq(object):
     self.fldigiclient.sendItNowFldigi(message)
     return ()
 
-   
-  #FIXME
+
   def sendItNowRig1(self, fragtagmsg):
     if(self.operating_mode == cn.FLDIGI or self.operating_mode == cn.JSDIGI):
       self.debug.info_message("sendItNowRig1 FLDIGI\n")
@@ -617,20 +615,14 @@ class NetGarq(object):
     length = len(line)
 
     for x in range(length-1):
-      #self.debug.info_message("my_new_callback. LOC 2 ")
-
       dict_obj = json.loads(line[x])
       text = self.js8client.stripEndOfMessage(self.js8client.getValue(dict_obj, "value")).decode('utf-8')
       
       type = self.js8client.getValue(dict_obj, "type").decode('utf-8')
       last_call = None
-
-      #self.debug.info_message("my_new_callback. LOC 3 ")
-      
+     
       """ test to see if there are any missing frames """
       self.js8client.areFramesMissing(self.js8client.getValue(dict_obj, "value") )
-
-      #self.debug.info_message("my_new_callback. LOC 4 ")
 
       if (type == "STATION.CALLSIGN"):
         self.debug.info_message("my_new_callback. STATION.CALLSIGN")
@@ -697,9 +689,14 @@ def main():
     group_arq.formdesigner_mode = False
     group_arq.include_gps = False
     group_arq.operating_mode = cn.FLDIGI
+
+    fldigi_address  = '127.0.0.1'
+    fldigi_port     = 7362
+    js8call_address = '127.0.0.1'
+    js8call_port    = 2442
     
-    (opts, args) = getopt.getopt(sys.argv[1:], "h:g:f:o",
-      ["help", "gps", "formdesigner", "opmode="])
+    (opts, args) = getopt.getopt(sys.argv[1:], "h:g:f:o:d:j",
+      ["help", "gps", "formdesigner", "opmode=", "fldigi=","js8call="])
     rosterFile, macroFile = None, None
     for option, argval in opts:
       if (option in ("-h", "--help")):
@@ -723,6 +720,18 @@ def main():
         elif(argval == "jsdigi"):
           group_arq.operating_mode = cn.JSDIGI
 
+      elif (option in ("-d", "--fldigi")):
+        split_string = argval.split(':')
+        fldigi_address = split_string[0]
+        fldigi_port    = int(split_string[1])
+        debug.info_message("fldigi address:port = " + fldigi_address + ":" + str(fldigi_port) )
+
+      elif (option in ("-j", "--js8call")):
+        split_string = argval.split(':')
+        js8call_address = split_string[0]
+        js8call_port = int(split_string[1])
+        debug.info_message("js8 call address:port = " + js8call_address + ":" + str(js8call_port) )
+
     
     if(group_arq.include_gps == True):
       try:
@@ -741,8 +750,6 @@ def main():
         """ create the rig 1 fldigi instance and give it a name """
         fldigiClient = fldigi_client.FLDIGI_Client(debug, 'kenwood')
         group_arq.fldigiclient = fldigiClient
-        fldigi_address = '127.0.0.1'
-        fldigi_port    = 7362
         server = (fldigi_address, fldigi_port)
         fldigiClient.connect(server)
         t1 = threading.Thread(target=fldigiClient.run, args=())
@@ -766,8 +773,6 @@ def main():
         group_arq.setDebug(debug)
         js8Client = JS8_Client.JS8_Client(debug)
         group_arq.js8client = js8Client
-        js8call_address = '127.0.0.1'
-        js8call_port    = 2442
         server = (js8call_address, js8call_port)
         js8Client.connect(server)
         t1 = threading.Thread(target=js8Client.run, args=())
@@ -795,7 +800,7 @@ def main():
     group_arq.form_dictionary.readInboxDictFromFile('inbox.msg')
     group_arq.form_dictionary.readOutboxDictFromFile('outbox.msg')
     group_arq.form_dictionary.readSentDictFromFile('sentbox.msg')
-    #group_arq.form_dictionary.readRelayboxDictFromFile('relaybox.msg')
+    group_arq.form_dictionary.readRelayboxDictFromFile('relaybox.msg')
 
     window = group_arq.form_gui.createMainTabbedWindow(mylongstring, js)
 

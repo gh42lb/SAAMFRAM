@@ -89,12 +89,6 @@ class SaamParser(object):
     try:
       if( self.compareStrings(cn.COMM_SAAM_MSG, text, modetype) ):
 
-        #success, remainder, from_call, to_call = self.getFromToAddresses(text, cn.COMM_SAAM_MSG)
-        #if (success):
-        #  return cn.COMMAND_SAAM, remainder, from_call, to_call
-        #else
-        #  return cn.COMMAND_NONE, text, '', ''
-
         remainder = text.replace('  ', ' ')
         split_string = remainder.split(cn.COMM_SAAM_MSG, 1)
         before_text = split_string[0][-15:]
@@ -321,30 +315,21 @@ class SaamParser(object):
     self.debug.info_message("DECODING PRE MSG PEND(")
     succeeded, remainder, msgid, rcv_list = self.decodePreMsgCommonN(text, end_of_premsg, ' PEND(', 2)
 
-    #self.debug.info_message("DECODING PRE MSG PEND LOC 2")
-
     test_split = rcv_list.split(';')
     add_to_inbox = False
-    #self.debug.info_message("DECODING PRE MSG PEND LOC 3")
     for x in range (0, len(test_split)):
-      if(test_split[x] == self.saamfram.getMyCall()):
+      if(test_split[x].upper() == self.saamfram.getMyCall()):
         add_to_inbox = True
-    #self.debug.info_message("DECODING PRE MSG PEND LOC 4")
     timestamp = datetime.utcnow().strftime('%y%m%d%H%M%S')
     if(add_to_inbox == True):
-      #self.debug.info_message("DECODING PRE MSG PEND LOC 5")
-      self.form_dictionary.createInboxDictionaryItem(msgid, rcv_list, '', '-', '-', timestamp, '-', {} )
-      self.group_arq.addMessageToInbox('', rcv_list, '-', timestamp, '-', '-', 'Partial', msgid)
+      self.form_dictionary.createInboxDictionaryItem(msgid, rcv_list, '', '-', '-', timestamp, '-', {}, 'Stub' )
       self.form_gui.window['table_inbox_messages'].update(values=self.group_arq.getMessageInbox() )
       self.form_gui.window['table_inbox_messages'].update(row_colors=self.group_arq.getMessageInboxColors())
     else:
-      #self.debug.info_message("DECODING PRE MSG PEND LOC 6")
-      self.form_dictionary.createRelayboxDictionaryItem(msgid, rcv_list, '', '-', '-', timestamp, '-', {}, '', '')
-      self.group_arq.addMessageToRelaybox('', rcv_list, '-', timestamp, '-', '-', msgid, 'Partial', '')
+      #self.form_dictionary.createRelayboxDictionaryItem(msgid, rcv_list, '', '-', '-', timestamp, '-', {}, '', '', 'Stub')
+      self.form_dictionary.createRelayboxDictionaryItem(msgid, rcv_list, '', '-', '-', timestamp, '-', '', '', {}, 'Stub')
       self.form_gui.window['table_relay_messages'].update(values=self.group_arq.getMessageRelaybox() )
       self.form_gui.window['table_relay_messages'].update(row_colors=self.group_arq.getMessageRelayboxColors())
-
-    #self.debug.info_message("DECODING PRE MSG PEND LOC 7")
 
     return succeeded, remainder
 

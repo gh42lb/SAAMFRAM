@@ -303,7 +303,8 @@ class FormDictionary(object):
     
     details = self.template_file_dictionary_data[filename]
 
-    self.debug.info_message("WRITING TO FILE DICTIONARY: " + str(details) )
+    self.debug.info_message("writeTemplateDictToFile: " + str(filename) )
+    self.debug.info_message("writeTemplateDictToFile: " + str(details) )
  
     try:
       with open(filename, 'w') as convert_file:
@@ -428,9 +429,14 @@ class FormDictionary(object):
       confrcvd  = message.get('confrcvd')
       fragsize  = message.get('fragsize')
 
-      self.group_arq.addMessageToRelaybox(msgfrom, msgto, subject, timestamp, priority, formname, ID, confrcvd, fragsize)
+      self.group_arq.addMessageToRelaybox(msgfrom, msgto, subject, timestamp, priority, formname, ID, confrcvd, fragsize, verified)
    
     return 
+
+  def resetRelayboxDictionary(self):
+    self.relaybox_file_dictionary_data = {}
+    return
+
 
   def doesRelayboxDictionaryItemExist(self, msgid):
 
@@ -441,9 +447,25 @@ class FormDictionary(object):
     return
 
 
-  def createRelayboxDictionaryItem(self, ID, msgto, msgfrom, subject, priority, timestamp, formname, confrcvd, fragsize, content):
+  def createRelayboxDictionaryItem(self, ID, msgto, msgfrom, subject, priority, timestamp, formname, confrcvd, fragsize, content, verified):
 
-    verified = 'yes'
+    #verified = 'yes'
+
+    if( ID in self.relaybox_file_dictionary_data):
+      self.debug.info_message("createRelayboxDictionaryItem item already exists in relaybox")
+      pages = self.relaybox_file_dictionary_data.get(ID)
+      page_zero = pages.get('0')
+      get_verified  = page_zero.get('verified')
+      """ already have a verified copy so don't update anything"""
+      if(get_verified == 'Verified'):
+        return (self.relaybox_file_dictionary_data)
+      
+      """ partial is upgrade from stub so do not down-grade."""
+      if(get_verified == 'Partial' and verified == 'Stub'):
+        return (self.relaybox_file_dictionary_data)
+
+
+    self.debug.info_message("createRelayboxDictionaryItem replacing the dictionary item")
 
     self.relaybox_file_dictionary_data[ID] = { '0' : {'content'            : content,
                                                       'to'                 : msgto,
@@ -455,6 +477,10 @@ class FormDictionary(object):
                                                       'confrcvd'           : confrcvd,
                                                       'fragsize'           : fragsize,
                                                       'formname'           : formname} }
+
+    self.group_arq.addMessageToRelaybox(msgfrom, msgto, subject, timestamp, priority, formname, ID, confrcvd, fragsize, verified)
+    self.group_arq.form_gui.window['table_relay_messages'].update(values=self.group_arq.getMessageRelaybox() )
+    self.group_arq.form_gui.window['table_relay_messages'].update(row_colors=self.group_arq.getMessageRelayboxColors())
 
     return (self.relaybox_file_dictionary_data)
 
@@ -642,14 +668,24 @@ class FormDictionary(object):
       return False
     return
 
-  def createInboxDictionaryItem(self, ID, msgto, msgfrom, subject, priority, timestamp, formname, content):
+  def createInboxDictionaryItem(self, ID, msgto, msgfrom, subject, priority, timestamp, formname, content, verified):
 
     missing_frames = 'F1,F2,F3'
 
-    verified = 'Yes'
+    if( ID in self.inbox_file_dictionary_data):
+      self.debug.info_message("createInboxDictionaryItem item already exists in inbox")
+      pages = self.inbox_file_dictionary_data.get(ID)
+      page_zero = pages.get('0')
+      get_verified  = page_zero.get('verified')
+      """ already have a verified copy so don't update anything"""
+      if(get_verified == 'Verified'):
+        return (self.inbox_file_dictionary_data)
+      
+      """ partial is upgrade from stub so do not down-grade."""
+      if(get_verified == 'Partial' and verified == 'Stub'):
+        return (self.inbox_file_dictionary_data)
 
-    #self.debug.info_message("in createInboxDictionaryItem LOC 1\n")
-
+    """ either not present or not verified so take the new parameters and use them"""
     self.inbox_file_dictionary_data[ID] = { '0'  :  {'content'            : content,
                                                      'to'                 : msgto,
                                                      'from'               : msgfrom,
@@ -660,6 +696,10 @@ class FormDictionary(object):
                                                      'verified'           : verified,
                                                      'missingframes'      : missing_frames} }
 
+    self.group_arq.addMessageToInbox(msgfrom, msgto, subject, timestamp, priority, formname, verified, ID)
+    self.group_arq.form_gui.window['table_inbox_messages'].update(values=self.group_arq.getMessageInbox() )
+    self.group_arq.form_gui.window['table_inbox_messages'].update(row_colors=self.group_arq.getMessageInboxColors())
+
     return (self.inbox_file_dictionary_data)
 
 
@@ -667,8 +707,6 @@ class FormDictionary(object):
     missing_frames = ''
 
     verified = 'yes'
-
-    #self.debug.info_message("in addInboxDictionaryReply LOC 1\n")
 
     parent_keyval = self.inbox_file_dictionary_data[mainID]
 
@@ -743,8 +781,6 @@ class FormDictionary(object):
 
   def createSentboxDictionaryItem(self, ID, msgto, msgfrom, subject, priority, timestamp, formname, content):
 
-    #self.debug.info_message("in createSentboxDictionaryItem LOC 1\n")
-
     self.sentbox_file_dictionary_data[ID] = {'content'            : content,
                                              'to'                 : msgto,
                                              'from'               : msgfrom,
@@ -795,12 +831,13 @@ class FormDictionary(object):
       formname  = message.get('formname')
       content   = message.get('content')
 
+      #FIXME DO NOT HARD CODE THESE!!!! 
       confirmed_received = 'yes'
       frag_size = 20
+      verified = 'Verified'
 
       """ copy the message over """
-      self.createRelayboxDictionaryItem(ID, msgto, msgfrom, subject, priority, timestamp, formname, confirmed_received, frag_size, content)
-      self.group_arq.addMessageToRelaybox(msgfrom, msgto, subject, timestamp, priority, formname, ID, confirmed_received, frag_size)
+      self.createRelayboxDictionaryItem(ID, msgto, msgfrom, subject, priority, timestamp, formname, confirmed_received, frag_size, content, verified)
 
     except:
       self.debug.error_message("Exception in transferOutboxMsgToRelaybox: " + str(sys.exc_info()[0]) + str(sys.exc_info()[1] ))
@@ -822,16 +859,79 @@ class FormDictionary(object):
     except:
       self.debug.error_message("Exception in readMainDictionaryFromFile: " + str(sys.exc_info()[0]) + str(sys.exc_info()[1] ))
 
-      js = { 'params': {'Templates'         : ['standard_templates.tpl'],
-                      'AutoLoadTemplate'  : True,
-                      'FirstName'         : '',
-                      'LastName'          : '',
-                      'Position'          : '',
-                      'GPSLat'            : '',
-                      'GPSLong'           : '',
-                      'CallSign'          : '',
-                      'GridSquare'        : '',
-                      'Location'          : ''} }
+      js = { 'params': {
+                           'Templates'           : ['ICS_Form_Templates.tpl'],
+                           'UseAttachedGps'      : 'Rig1',
+                           'AutoReceive'         : True,
+                           'AutoLoadTemplate'    : True,
+
+                           'TrustOrigSenderOnly' : False,
+                           'TrustedRelays'       : '',  
+                           'Rig1Vox'             : True,
+                           'Rig1Js8callIp'       : '127.0.0.1',
+                           'Rig1Js8callPort'     : '2442',
+                           'Rig1Js8callMode'     : 'Turbo',
+                           'Rig1FldigiIp'        : '127.0.0.1',
+                           'Rig1FldigiPort'      : '7362',
+                           'Rig1FldigiMode'      : 'MODE 5 - QPSK500',
+                           'Rig2Vox'             : False,
+                           'Rig2Js8callIp'       : '127.0.0.1',
+                           'Rig2Js8callPort'     : '7442',
+                           'Rig2Js8callMode'     : 'Turbo',
+                           'Rig2FldigiIp'        : '172.0.0.1',
+                           'Rig2FldigiPort'      : '7363',
+                           'Rig2FldigiMode'      : 'MODE 5 - QPSK500',
+
+                           'ComposeTabClr'      : 'Green1',
+                           'InboxTabClr'        : 'Green1',
+                           'OutboxTabClr'       : 'Green1',
+                           'SentboxTabClr'      : 'Green1',
+                           'RelayboxTabClr'     : 'Green1',
+                           'InfoTabClr'         : 'Green1',
+                           'ColorsTabClr'       : 'Green1',
+                           'SettingsTabClr'     : 'Green1',
+
+                           'FldigChannelClr'    : 'Red',
+                           'Js8CallChannelClr'  : 'Red',
+                           'TxButtonClr'        : 'Red',
+                           'MessagesBtnClr'     : 'Red',
+                           'ClipboardBtnClr'    : 'Red',
+                           'TabClr'             : 'Red',
+                           'TxRig'              : 'Red',
+                           'Flash1Clr'          : 'Red',
+                           'Flash2Clr'          : 'Red',
+                           'StubMsgClr'         : 'Red',
+                           'PartialMsgClr'      : 'Red',
+                           'CompleteMsgClr'     : 'Red',
+                           'AllConfirmedMsgClr'       : 'Red',
+                           'NotAllConfirmedMsgClr'    : 'Red',
+                           'FormHeadingClr'           : 'Red',
+                           'FormSubHeadingClr'        : 'Red',
+                           'FormPreviewBackgroundClr' : 'Red',
+
+                           'TxRig'           : 'Rig1',
+                           'TxModeType'      : 'FLDIGI',
+                           'Rig1Name'        : 'Kenwood',
+                           'Rig1Modem'       : 'FLDIGI',
+                           'Rig1Mode'        : 'MODE 5 - QPSK500',
+                           'Rig1FragmSize'   : '30',
+                           'Rig2Name'        : 'Yaesu',
+                           'Rig2Modem'       : 'JS8CALL',
+                           'Rig2Mode'        : 'Turbo',
+                           'Rig2FragmSize'   : '40',
+                           'CallSign'        : 'WH6ABC',
+                           'GroupName'       : '@MYGROUP',
+                           'OperatorName'    : 'Fred Smith',
+                           'OperatorTitle'   : 'Operator',
+                           'IncidentName'    : 'My Test Incident',
+                           'FirstName'       : 'Fred',
+                           'LastName'        : 'Smith',
+                           'Title'           : 'Operator',
+                           'Position'        : 'Head',
+                           'GPSLat'          : '123.456',
+                           'GPSLong'         : '-155',
+                           'GridSquare'      : '',
+                           'Location'        : 'My QTH',} }
 
     auto_load_templates = js.get("params").get('AutoLoadTemplate')
     if(auto_load_templates):
@@ -847,9 +947,12 @@ class FormDictionary(object):
   """ writes the messages to the messages file """
   def writeMainDictionaryToFile(self, filename, values):
 
-    """ individual fields first """	  
-    details = { 'params': {
-                           'Templates'         : ['standard_templates.tpl'],
+    if(self.group_arq.formdesigner_mode == True):
+      details = self.group_arq.saamfram.main_params
+    else:  
+      """ individual fields first """	  
+      details = { 'params': {
+                           'Templates'         : ['ICS_Form_Templates.tpl'],
                            'UseAttachedGps'      : 'Rig1',
                            'AutoReceive'         : values['cb_mainwindow_autoacceptps'],
                            'AutoLoadTemplate'    : values['cb_settings_autoload'],

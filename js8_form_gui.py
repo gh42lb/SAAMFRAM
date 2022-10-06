@@ -16,6 +16,7 @@ import platform
 import calendar
 import xmlrpc.client
 import math
+import debug as db
 
 import saam_mail
 import js8_form_events
@@ -50,14 +51,11 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 """
 
-#FIXME PAD WAS SET TO 2,0   FONT WAS SET TO 12
 def createTextElement(self, keyname, t1, text, width, height, pad, sub_layout):
   if(width>0):
     line =  [sg.Text(text, size=(width, height), font=("Courier New", 9), pad=(pad,0), border_width=0, relief = sg.RELIEF_FLAT)]
-    #line =  [sg.Text(text, size=(width, height), font=("Courier New", 9), pad=(pad,0), border_width=1, relief = sg.RELIEF_FLAT)]
   else:  
     line =  [sg.Text(text, size=(width, height), font=("Helvetica", 9), expand_x=True, pad=(pad,0), border_width=0, relief = sg.RELIEF_FLAT )]
-    #line =  [sg.Text(text, size=(width, height), font=("Helvetica", 9), expand_x=True, pad=(pad,0), border_width=1, relief = sg.RELIEF_FLAT )]
   return line
 
 def createSimTextElement(self, keyname, t1, text, width, height, pad, sub_layout):
@@ -68,7 +66,6 @@ def createPreviewTextElement(self, keyname, t1, text, width, height, pad, sub_la
   line =  text + ' ' * (width - len(text))
   return line
 
-#FIXME PAD WAS SET TO 3,0     FONT WAS SET TO 12
 def createInputElement(self, keyname, t1, text, width, height, pad, sub_layout):
 
   t1 = self.replaceFields(t1)
@@ -91,7 +88,6 @@ def createSimInputElement(self, keyname, t1, text, width, height, pad, sub_layou
   return line
 
 def createPreviewInputElement(self, keyname, t1, text, width, height, pad, sub_layout):
-  #line =  t1 + ' ' * (width - len(t1))
   line =  t1 + ' ' * (width - len(t1))
   """
   line =  '' 
@@ -165,7 +161,6 @@ def createSimSubHeadingElement(self, keyname, t1, text, width, height, pad, sub_
   return line
 
 def createPreviewSubHeadingElement(self, keyname, t1, text, width, height, pad, sub_layout):
-  #line =  text + ' ' * (width - len(text))
   line =  t1 + ' ' * (width - len(t1))
   return line
 
@@ -184,7 +179,6 @@ def createPreviewSeparatorElement(self, keyname, t1, text, width, height, pad, s
 
 
 def createColumnElement(self, keyname, t1, text, width, height, pad, sub_layout):
-  self.debug.info_message("CREATING COLUMN ELEMENT. sub layout : " + str(sub_layout) )
   line =  [sg.Col(sub_layout, background_color=sg.DEFAULT_BACKGROUND_COLOR, key=keyname, vertical_alignment = 'top')]
   return line
 
@@ -203,10 +197,7 @@ def createPreviewColumnElement(self, keyname, t1, text, width, height, pad, sub_
 #when readin, read each radio button until selected is found then skip the rest.
 def createRadioGroupElement(self, keyname, t1, text, width, height, pad, sub_layout):
 
-  #button_list = 'Normal,High,Low'.split(',')
   button_list = text.split(',')
-
-  self.debug.info_message("content of button is : " + text )
 
   widest = 0
   for x in range (len(button_list)):
@@ -221,17 +212,13 @@ def createRadioGroupElement(self, keyname, t1, text, width, height, pad, sub_lay
     meta_value = 'BG,' + str(len(button_list))
     if(str(x) == t1):
       checked = True
-      self.debug.info_message("setting checked to True\n")
     else:
       checked = False
-      self.debug.info_message("setting checked to False\n")
 
     if(x==0):
       line = line + [sg.Radio(button_list[x], keyname, size=(width, height), font=("Courier New", 9), key=keyname, metadata=meta_value, default=checked )] 
-      #line = line + [sg.Radio(text, keyname, size=(width, height), font=("Courier New", 9), key=keyname, metadata=meta_value, default=checked )] 
     else:
       line = line + [sg.Radio(button_list[x], keyname, size=(width, height), font=("Courier New", 9), key=btn_keyname, default=checked)] 
-      #line = line + [sg.Radio(text, keyname, size=(width, height), font=("Courier New", 9), key=btn_keyname, default=checked)] 
   return line
 
 def createSimRadioGroupElement(self, keyname, t1, text, width, height, pad, sub_layout):
@@ -239,10 +226,7 @@ def createSimRadioGroupElement(self, keyname, t1, text, width, height, pad, sub_
   return line
 
 def createPreviewRadioGroupElement(self, keyname, t1, text, width, height, pad, sub_layout):
-  #line =  t1 + ' ' * (width - len(t1))
   line = ''
-
-  self.debug.info_message("createpreviewradiogroup t1, text: " + t1 + ',' + text)
 
   strings = text.split(',')
   for x in range (len(strings)):
@@ -251,7 +235,6 @@ def createPreviewRadioGroupElement(self, keyname, t1, text, width, height, pad, 
     else:
       line = line + '   '
     line = line + strings[x] + ' '
-  #line =  t1 + ' ' + text + ' ' * (width - len(t1))
   return line
 
 
@@ -259,15 +242,7 @@ def createOptionMenuElement(self, keyname, t1, text, width, height, pad, sub_lay
 
   option_list = text.split(',')
 
-  self.debug.info_message("option menu t1 is: " + t1 )
-
   selected = t1
-  #try:
-  #  int_sel = int(t1)
-  #  if(int_sel<len(option_list)):
-  #    selected = option_list[int_sel]
-  #except:
-  #  self.debug.info_message("t1 is not int\n")
 
   meta_value = 'OM,' + str(len(option_list))
 
@@ -287,9 +262,6 @@ def createPreviewOptionMenuElement(self, keyname, t1, text, width, height, pad, 
 def createCheckBoxGroupElement(self, keyname, t1, text, width, height, pad, sub_layout):
   button_list = text.split(',')
 
-  self.debug.info_message("ckbox content data is: " + t1 )
-
-
   widest = 0
   for x in range (len(button_list)):
     if(len(button_list[x])>widest):
@@ -303,17 +275,13 @@ def createCheckBoxGroupElement(self, keyname, t1, text, width, height, pad, sub_
     meta_value = 'CG,' + str(len(button_list))
     if(len(t1) > x and t1[x] == 'X'):
       checked = True
-      self.debug.info_message("setting checked to True\n")
     else:
       checked = False
-      self.debug.info_message("setting checked to False\n")
 
     if(x==0):
       line = line + [sg.CBox(button_list[x] , size=(width, height), font=("Courier New", 9), key=keyname, metadata=meta_value, default=checked)] 
-      #line = line + [sg.Radio(button_list[x], keyname, size=(width, height), font=("Courier New", 9), key=keyname, metadata=meta_value, default=checked )] 
     else:
       line = line + [sg.CBox(button_list[x] , size=(width, height), font=("Courier New", 9), key=btn_keyname, default=checked)] 
-      #line = line + [sg.Radio(button_list[x], keyname, size=(width, height), font=("Courier New", 9), key=btn_keyname, default=checked)] 
   return line
 
 def createSimCheckBoxGroupElement(self, keyname, t1, text, width, height, pad, sub_layout):
@@ -323,9 +291,6 @@ def createSimCheckBoxGroupElement(self, keyname, t1, text, width, height, pad, s
 def createPreviewCheckBoxGroupElement(self, keyname, t1, text, width, height, pad, sub_layout):
   line =  'ckbox'+ t1 + ' ' + text + ' ' * (width - len(t1))
   return line
-
-
-
 
 
 class FormGui(object):
@@ -350,9 +315,11 @@ class FormGui(object):
     self.tabgrp = None
     self.window = None
     self.table_lookup = None
-    #self.special_chars = '0@#?!$%&%*+=-|<>'
     self.special_chars = '0@'
     self.compose_popup_window = None
+
+    """ form designed debug code is verbose see notch this back to ERROR level unless needed"""
+    self.debugForms = db.Debug(cn.DEBUG_ERROR)
 
     return
 
@@ -466,53 +433,6 @@ class FormGui(object):
     '0P'    : 'FillerSpan 2,1',
     '0Q'    : 'FillerSpan 3,1',
     '0R'    : 'FillerSpan 4,1',
-
-    #""" align next field and remaining fields with prev line fied and remaining fields starting at posiyion N """
-    #'0I'    : 'Align NFRF,PLRF,4',
-
-    #""" next field spans n number of prev line filds """
-    #'0I'    : 'Span NFPL,2',
-
-    #""" next field is a blank filler text field used for alignment only """
-    #'0I'    : 'Filler',
-
-
-
-
-    #""" align next line field widths with prev line field widths """
-    #'0I'    : 'Align NF,PLF4',???????????
-
-    #""" force width to a value"""
-    #'0F'    : '15xWidth',
-    #'0G'    : '20xWidth',
-    #'0H'    : '30xWidth',
-    #""" align this lines field widths with next row fields """
-    #'0I'    : 'AlignNext',
-    #""" align this lines field widths with next row +1 fields """
-    #'0J'    : 'AlignNext+1',
-    #""" align field with next row field# 2 """
-    #'0K'    : '2xField Align Next',
-    #""" align field with next row field# 3 """
-    #'0L'    : '3xField Align Next',
-    #""" align field with next row field# 4 """
-    #'0M'    : '4xField Align Next',
-    #""" align field with next row field# 5 """
-    #'0N'    : '5xField Align Next',
-    #""" align field with next row field# 6 """
-    #'0O'    : '6xField Align Next',
-    #""" align this lines field widths with previous row fields """
-    #'0P'    : 'AlignPrev',
-    #""" align field with prev row field# 2 """
-    #'0Q'    : '2xField Align Prev',
-    #""" align field with prev row field# 3 """
-    #'0R'    : '3xField Align Prev',
-    #""" align field with prev row field# 4 """
-    #'0S'    : '4xField Align Prev',
-    #""" align field with prev row field# 5 """
-    #'0T'    : '5xField Align Prev',
-    #""" align field with prev row field# 6 """
-    #'0U'    : '6xField Align Prev',
-
 
 
     #""" radio button control code """
@@ -1060,7 +980,7 @@ class FormGui(object):
 
     layout_header = [sg.Button('Close')]
 
-    #self.debug.info_message("createInboxViewReplyWindow LOC 1\n")
+    self.debugForms.info_message("createInboxViewReplyWindow LOC 1\n")
 
     if(show_headers):
       layout_header = [
@@ -1085,15 +1005,15 @@ class FormGui(object):
 
       ]
 
-    #self.debug.info_message("createInboxViewReplyWindow LOC 2\n")
+    self.debugForms.info_message("createInboxViewReplyWindow LOC 2\n")
 
     if(self.group_arq.saamfram.isReply(message_id)):
-      #self.debug.info_message("createInboxViewReplyWindow LOC 3\n")
+      self.debugForms.info_message("createInboxViewReplyWindow LOC 3\n")
       mainID = self.group_arq.getOriginalSenderID(message_id)
       replyID = self.group_arq.getReplyID(message_id)
     else:
       mainID = message_id
-      #self.debug.info_message("createInboxViewReplyWindow LOC 4\n")
+      self.debugForms.info_message("createInboxViewReplyWindow LOC 4\n")
 
 
     self.debug.info_message("message ID: " + mainID + " \n")
@@ -1204,12 +1124,22 @@ class FormGui(object):
     layout2 = [ [sg.Button('Hello')],]
     layout3 = [ [sg.Button('More')],]
 
+    """ multipage tab not yet implemented """
+    """
     self.tabgrp = [[sg.TabGroup([[
                              sg.Tab('Page 1', layout, title_color='Green', background_color=sg.DEFAULT_BACKGROUND_COLOR),
                              sg.Tab('Page 2', layout2, title_color='Blue',border_width =10, background_color='Green1' ),
                              sg.Tab('Page 3', layout3, title_color='Blue', background_color='Magenta1')]],
                        tab_location='centertop',
                        title_color='Blue', tab_background_color='Dark Gray', background_color='Dark Gray', selected_title_color='Black', selected_background_color='White' )]]  
+    """
+    """ single page tab for now """
+    self.tabgrp = [[sg.TabGroup([[
+                             sg.Tab('Page 1', layout, title_color='Green', background_color=sg.DEFAULT_BACKGROUND_COLOR)]],
+                       tab_location='centertop',
+                       title_color='Blue', tab_background_color='Dark Gray', background_color='Dark Gray', selected_title_color='Black', selected_background_color='White' )]]  
+    
+    
     multi_page_window = sg.Window("MY ICS FORM", self.tabgrp, default_element_size=(40, 1), grab_anywhere=False, disable_close=True)                       
 
     self.setComposePopupWindow(multi_page_window)
@@ -1219,6 +1149,7 @@ class FormGui(object):
 
   def renderPage(self, mytemplate, use_dynamic_content_macro, form_content):
     self.debug.info_message("RENDER PAGE\n")
+    self.debug.info_message("type is:" + str(self))
 
     layout = []
 
@@ -1281,12 +1212,12 @@ class FormGui(object):
 
         line = mytemplate[x]
 
-        self.debug.info_message("processing line : " + str(line) )
+        self.debugForms.info_message("processing line : " + str(line) )
 
         split_string = line.split(',')
         repeat_lines = next_repeat_lines
         for rl in range(repeat_lines):
-          #self.debug.info_message("RL LOC 1\n")
+          self.debugForms.info_message("RL LOC 1\n")
 
           window_line_text = ''
           window_line = []
@@ -1296,15 +1227,15 @@ class FormGui(object):
             field = split_string[y]
             mylist = self.field_lookup[field]
 
-            #self.debug.info_message("Y LOC 1\n")
+            self.debugForms.info_message("Y LOC 1\n")
 
             if(mylist[5] == True):
               line_content_count = line_content_count + 1
 
-            #self.debug.info_message("Y LOC 2\n")
+            self.debugForms.info_message("Y LOC 2\n")
 
             if(read_ahead == 1 and rl == 0):
-              #self.debug.info_message("readahead: 1, rl: 0\n")
+              self.debugForms.info_message("readahead: 1, rl: 0\n")
               if(field[0] == '0' and mylist[0]=='FillerSpan'):
                 self.debug.info_message("do nothing here\n")
               else:
@@ -1326,7 +1257,7 @@ class FormGui(object):
 
             if(read_ahead == 0):
               if(rl == 0):
-                #self.debug.info_message("readahead: 0, rl: 0\n")
+                self.debugForms.info_message("readahead: 0, rl: 0\n")
                 if(y==0):
                   """ if this is a zero code set width to zero"""
                   if(field[0] == '0' or field[0] == '@'):
@@ -1349,7 +1280,7 @@ class FormGui(object):
                   num_input_fld_on_line[x-2] = temp_value + ',' + str(line_content_count)
 
             elif(read_ahead == 1 and mylist[0]!='FillerSpan' and mylist[0]!='FillerPad'):
-              #self.debug.info_message("readahead: 1 and not FillerSpan or FillerPad\n")
+              self.debugForms.info_message("readahead: 1 and not FillerSpan or FillerPad\n")
               if(new_field_widths == ''):
                 new_field_widths = str(mylist[1])
               else:
@@ -1362,7 +1293,7 @@ class FormGui(object):
               field_count = field_count + 1
 
               if(intercept_type=='Checkbox' and read_ahead == 1):
-                self.debug.info_message("Checkbox\n")
+                self.debugForms.info_message("Checkbox\n")
                 if(mylist_intercept[5] == True):
                   keyname = 'content_' + str(content_field_count)
                   content_field_count = content_field_count + 1
@@ -1370,7 +1301,7 @@ class FormGui(object):
                 field_width = len(mylist[0])
                 window_line = window_line + (mylist_intercept[3](self, keyname, mylist[0], '', field_width, 1, 0, None))
               elif(intercept_type=='RadioButton' and read_ahead == 1):
-                self.debug.info_message("Radio Button\n")
+                self.debugForms.info_message("Radio Button\n")
                 if(mylist_intercept[5] == True):
                   keyname = 'content_' + str(content_field_count)
                   content_field_count = content_field_count + 1
@@ -1382,10 +1313,10 @@ class FormGui(object):
                 if(mylist_intercept[5] == True):
                   keyname = 'content_' + str(content_field_count)
                   content_field_count = content_field_count + 1
-                self.debug.info_message("Radio Button Group\n")
+                self.debugForms.info_message("Radio Button Group\n")
                 mylist_intercept = self.field_lookup[intercept_field]
                 field_width = len(mylist[0])
-                self.debug.info_message("content count is:" + str(content_count) )
+                self.debugForms.info_message("content count is:" + str(content_count) )
                 display_content = ''
                 if(content_count < len(form_content)):
                   display_content = form_content[content_count]
@@ -1397,14 +1328,14 @@ class FormGui(object):
                 if(mylist_intercept[5] == True):
                   keyname = 'content_' + str(content_field_count)
                   content_field_count = content_field_count + 1
-                self.debug.info_message("Check Box Group\n")
+                self.debugForms.info_message("Check Box Group\n")
                 mylist_intercept = self.field_lookup[intercept_field]
                 field_width = len(mylist[0])
-                self.debug.info_message("content count is:" + str(content_count) )
+                self.debugForms.info_message("content count is:" + str(content_count) )
                 window_line = window_line + (mylist_intercept[3](self, keyname, form_content[content_count], mylist[0], field_width, 1, 0, None))
                 content_count = content_count + 1  
               elif(intercept_type=='OptionMenu' and read_ahead == 1):
-                self.debug.info_message("Option Menu\n")
+                self.debugForms.info_message("Option Menu\n")
                 mylist_intercept = self.field_lookup[intercept_field]
                 if(mylist_intercept[5] == True):
                   keyname = 'content_' + str(content_field_count)
@@ -1413,7 +1344,7 @@ class FormGui(object):
                 window_line = window_line + (mylist_intercept[3](self, keyname, form_content[content_count], mylist[0], field_width, 1, 0, None))
                 content_count = content_count + 1  
               elif(intercept_type=='Combo' and read_ahead == 1):
-                self.debug.info_message("Combo\n")
+                self.debugForms.info_message("Combo\n")
                 if(mylist_intercept[5] == True):
                   keyname = 'content_' + str(content_field_count)
                   content_field_count = content_field_count + 1
@@ -1421,13 +1352,13 @@ class FormGui(object):
                 field_width = len(mylist[0])
                 window_line = window_line + (mylist_intercept[3](self, keyname, mylist[0], '', field_width, 1, 0, None))
               elif(intercept_type=='MainHeading' and read_ahead == 1):
-                self.debug.info_message("Main Heading\n")
+                self.debugForms.info_message("Main Heading\n")
                 mylist_intercept = self.field_lookup[intercept_field]
                 field_width = len(mylist[0])
                 window_line = window_line + (mylist_intercept[3](self, keyname, mylist[0], mylist[0], field_width, 1, 0, None))
                 window_line_text = window_line_text + ' ' + (mylist[6](self, keyname, mylist[0], mylist[0], field_width, 1, 0, None))
               elif(intercept_type=='SubHeading' and read_ahead == 1):
-                self.debug.info_message("SubHeading\n")
+                self.debugForms.info_message("SubHeading\n")
                 mylist_intercept = self.field_lookup[intercept_field]
                 field_width = len(mylist[0])
                 window_line = window_line + (mylist_intercept[3](self, keyname, mylist[0], mylist[0], field_width, 1, 0, None))
@@ -1442,83 +1373,83 @@ class FormGui(object):
               keyname = 'field_' + str(field_count)
               field_count = field_count + 1
 
-              self.debug.info_message("0 control codes\n")
+              self.debugForms.info_message("0 control codes\n")
               if(mylist[0]=='Field'):
-                self.debug.info_message("repeat field. CONTROL CODE  0: " + str(mylist[1]) )
+                self.debugForms.info_message("repeat field. CONTROL CODE  0: " + str(mylist[1]) )
                 repeat_field = mylist[1]
               elif(mylist[0]=='Spacer'):
-                self.debug.info_message("spacer CONTROL CODE  0: " + str(mylist[1]) )
+                self.debugForms.info_message("spacer CONTROL CODE  0: " + str(mylist[1]) )
                 field_width = int(mylist[1])
                 window_line = window_line + (mylist[3](self, keyname, '', '', field_width, 1, text_field_padding, None))
               elif(mylist[0]=='LineRepeat'):
-                self.debug.info_message("repeat lines. CONTROL CODE  0: " + str(mylist[1]) )
+                self.debugForms.info_message("repeat lines. CONTROL CODE  0: " + str(mylist[1]) )
                 next_repeat_lines = int(mylist[1])
                 """ format:     '0F'    : 'LineAlign 1,-1',  these numbers are *relative* to the current line index"""
               elif(mylist[0]=='LineAlign'):
-                self.debug.info_message("Align lines. CONTROL CODE  0: " + str(mylist[1]) )
+                self.debugForms.info_message("Align lines. CONTROL CODE  0: " + str(mylist[1]) )
                 align_widths_anchor_line     = int(mylist[1]) + x - 2
                 align_widths_adjustment_line = int(mylist[2]) + x - 2
-                self.debug.info_message("adjusting line values anchor,adjustment: " + str(align_widths_anchor_line) + ',' + str(align_widths_adjustment_line) )
+                self.debugForms.info_message("adjusting line values anchor,adjustment: " + str(align_widths_anchor_line) + ',' + str(align_widths_adjustment_line) )
                 """ format:    '0L'    : 'FillerSpan 2,-1',"""
               elif(mylist[0]=='FillerPad' and read_ahead == 1):
-                self.debug.info_message("Filler Pad. CONTROL CODE  0: " + str(mylist[1]) )
+                self.debugForms.info_message("Filler Pad. CONTROL CODE  0: " + str(mylist[1]) )
                 text_field_padding = int(mylist[1])
 
               elif(mylist[0]=='Checkbox' and read_ahead == 1):
-                self.debug.info_message("Checkbox. CONTROL CODE  0: " + str(mylist[1]) )
+                self.debugForms.info_message("Checkbox. CONTROL CODE  0: " + str(mylist[1]) )
                 intercept_next_field = True
                 intercept_type = mylist[0]
                 intercept_field = field
 
               elif(mylist[0]=='RadioButton' and read_ahead == 1):
-                self.debug.info_message("RadioButton. CONTROL CODE  0: " + str(mylist[1]) )
+                self.debugForms.info_message("RadioButton. CONTROL CODE  0: " + str(mylist[1]) )
                 intercept_next_field = True
                 intercept_type = mylist[0]
                 intercept_field = field
 
               elif(mylist[0]=='RadioBtnGroup' and read_ahead == 1):
-                self.debug.info_message("RadioButtonGroup. CONTROL CODE  0: " + str(mylist[1]) )
+                self.debugForms.info_message("RadioButtonGroup. CONTROL CODE  0: " + str(mylist[1]) )
                 intercept_next_field = True
                 intercept_type = mylist[0]
                 intercept_field = field
 
               elif(mylist[0]=='CkBoxGroup' and read_ahead == 1):
-                self.debug.info_message("Check Box Group. CONTROL CODE  0: " + str(mylist[1]) )
+                self.debugForms.info_message("Check Box Group. CONTROL CODE  0: " + str(mylist[1]) )
                 intercept_next_field = True
                 intercept_type = mylist[0]
                 intercept_field = field
 
               elif(mylist[0]=='OptionMenu' and read_ahead == 1):
-                self.debug.info_message("OptionMenu. CONTROL CODE  0: " + str(mylist[1]) )
+                self.debugForms.info_message("OptionMenu. CONTROL CODE  0: " + str(mylist[1]) )
                 intercept_next_field = True
                 intercept_type = mylist[0]
                 intercept_field = field
 
               elif(mylist[0]=='Combo' and read_ahead == 1):
-                self.debug.info_message("Combo. CONTROL CODE  0: " + str(mylist[1]) )
+                self.debugForms.info_message("Combo. CONTROL CODE  0: " + str(mylist[1]) )
                 intercept_next_field = True
                 intercept_type = mylist[0]
                 intercept_field = field
 
               elif(mylist[0]=='MainHeading' and read_ahead == 1):
-                self.debug.info_message("Main Heading. CONTROL CODE  0: " + str(mylist[1]) )
+                self.debugForms.info_message("Main Heading. CONTROL CODE  0: " + str(mylist[1]) )
                 intercept_next_field = True
                 intercept_type = mylist[0]
                 intercept_field = field
 
               elif(mylist[0]=='SubHeading' and read_ahead == 1):
-                self.debug.info_message("SubHeading. CONTROL CODE  0: " + str(mylist[1]) )
+                self.debugForms.info_message("SubHeading. CONTROL CODE  0: " + str(mylist[1]) )
                 intercept_next_field = True
                 intercept_type = mylist[0]
                 intercept_field = field
 
               elif(mylist[0]=='Separator' and read_ahead == 1):
-                self.debug.info_message("Separator. CONTROL CODE  0: " + str(mylist[1]) )
+                self.debugForms.info_message("Separator. CONTROL CODE  0: " + str(mylist[1]) )
                 field_width = int(mylist[1])
                 window_line = window_line + (mylist[3](self, keyname, '', '', field_width, 1, text_field_padding, None))
 
               elif(mylist[0]=='StartColumn' and read_ahead == 1):
-                self.debug.info_message("Start Column. CONTROL CODE  0: " + str(mylist[1]) )
+                self.debugForms.info_message("Start Column. CONTROL CODE  0: " + str(mylist[1]) )
                 column_intercept = True
                 column_intercept_type = mylist[0]
                 column_intercept_field = field
@@ -1528,7 +1459,7 @@ class FormGui(object):
                 column_count = 0
 
               elif(mylist[0]=='NewColumn' and read_ahead == 1):
-                self.debug.info_message("NewColumn. CONTROL CODE  0: " + str(mylist[1]) )
+                self.debugForms.info_message("NewColumn. CONTROL CODE  0: " + str(mylist[1]) )
 
                 if(mylist[5] == True):
                   keyname = 'content_' + str(content_field_count)
@@ -1536,8 +1467,8 @@ class FormGui(object):
 
                 mylist_column = self.field_lookup[field]
                 field_width = 10 
-                self.debug.info_message("NewColumn. keyname is: " + str(keyname) )
-                self.debug.info_message("NewColumn. column layout is: " + str(column_layout) )
+                self.debugForms.info_message("NewColumn. keyname is: " + str(keyname) )
+                self.debugForms.info_message("NewColumn. column layout is: " + str(column_layout) )
                 window_line_columns = window_line_columns + (mylist_column[3](self, keyname, mylist[0], '', field_width, 1, 0, column_layout))
 
                 max_col_row_width = 0
@@ -1549,7 +1480,7 @@ class FormGui(object):
 
                 for col_row in range (len(col_row_text)):
                   if(len(col_row_text[col_row]) < max_col_row_width):
-                    self.debug.info_message("adding col row padding: " + str((max_col_row_width - len(col_row_text[col_row]))) )
+                    self.debugForms.info_message("adding col row padding: " + str((max_col_row_width - len(col_row_text[col_row]))) )
                     col_row_padding = ' '* (max_col_row_width - len(col_row_text[col_row]))
                     previous_col_row_text = col_row_text[col_row]
                     col_row_text[col_row] = previous_col_row_text + col_row_padding
@@ -1560,7 +1491,7 @@ class FormGui(object):
                 column_count = column_count + 1
 
               elif(mylist[0]=='EndColumn' and read_ahead == 1):
-                self.debug.info_message("EndColumn. CONTROL CODE  0: " + str(mylist[1]) )
+                self.debugForms.info_message("EndColumn. CONTROL CODE  0: " + str(mylist[1]) )
 
                 if(mylist[5] == True):
                   keyname = 'content_' + str(content_field_count)
@@ -1568,8 +1499,8 @@ class FormGui(object):
 
                 mylist_column = self.field_lookup[field]
                 field_width = 10 
-                self.debug.info_message("EndColumn. keyname is: " + str(keyname) )
-                self.debug.info_message("EndColumn. column layout is: " + str(column_layout) )
+                self.debugForms.info_message("EndColumn. keyname is: " + str(keyname) )
+                self.debugForms.info_message("EndColumn. column layout is: " + str(column_layout) )
                 window_line_columns = window_line_columns + (mylist_column[3](self, keyname, mylist[0], '', field_width, 1, 0, column_layout))
 
 #################
@@ -1592,7 +1523,7 @@ class FormGui(object):
 
                 for col_row in range (len(col_row_text)):
                   window_line_text = window_line_text + col_row_text[col_row] + '\n'
-                  self.debug.info_message("set colrow text to: " + col_row_text[col_row] )
+                  self.debugForms.info_message("set colrow text to: " + col_row_text[col_row] )
 
                 layout = layout + [window_line_columns]
                 column_layout = []
@@ -1602,7 +1533,7 @@ class FormGui(object):
               
               elif(mylist[0]=='FillerSpan' and read_ahead == 1):
                 modified_line = True
-                self.debug.info_message("Filler Span. CONTROL CODE  0: " + str(mylist[1]) )
+                self.debugForms.info_message("Filler Span. CONTROL CODE  0: " + str(mylist[1]) )
                 #if(mylist[5] == True):
                 #  keyname = 'content_' + str(content_field_count)
                 #  content_field_count = content_field_count + 1
@@ -1656,14 +1587,14 @@ class FormGui(object):
                 self.debug.info_message("LOC 6\n")
 
                 window_line = window_line + (mylist[3](self, keyname, '', '', field_width, 1, text_field_padding, None))
-                #self.debug.info_message("field_count +1.    LOC 10\n")
+                self.debugForms.info_message("field_count +1.    LOC 10\n")
                 existing_line_filler = existing_line_filler + text_field_padding
                 text_field_padding = 0
 
                 self.debug.info_message("LOC 7\n")
 
             else:
-              #self.debug.info_message("resetting repeat lines to 1\n")
+              self.debugForms.info_message("resetting repeat lines to 1\n")
               next_repeat_lines = 1
           
               for rf in range(repeat_field):
@@ -1709,7 +1640,7 @@ class FormGui(object):
           #FIXME
           if(read_ahead ==1):
             if(column_intercept == True):
-              self.debug.info_message("column_intercept == True. column_intercept_type: " + str(column_intercept_type) + " \n")
+              self.debugForms.info_message("column_intercept == True. column_intercept_type: " + str(column_intercept_type) + " \n")
               if(column_intercept_type == 'StartColumn'):
                 column_intercept_type = ''
               elif(column_intercept_type == 'NewColumn'):
@@ -1750,7 +1681,7 @@ class FormGui(object):
 
 
     self.debug.info_message("COLUMNS LIST IS: " + str(columns_list) + " \n")
-    #self.debug.info_message("CREATE DYNAMIC POPUP WINDOW LOC 5\n")
+    self.debugForms.info_message("CREATE DYNAMIC POPUP WINDOW LOC 5\n")
 	  
     return render_text_only_text, table_data, layout
 
@@ -1810,7 +1741,7 @@ inbox dictionary items formatted as...
             if(field[0] == '0' or field[0] == '@'):
               control_field = True
             if(control_field and mylist[0]=='LineRepeat'):
-              self.debug.info_message("repeat lines. CONTROL CODE  0: " + str(mylist[1]) )
+              self.debugForms.info_message("repeat lines. CONTROL CODE  0: " + str(mylist[1]) )
               next_repeat_lines = int(mylist[1])
             #elif(rl == repeat_lines-1):
             #  next_repeat_lines = 1
@@ -1821,7 +1752,7 @@ inbox dictionary items formatted as...
 
               """ PROCESS THE METADATA IN HERE for BG (button group) """
               metadata = popup_window[keyname].metadata
-              self.debug.info_message("metadata: " + str(metadata) )
+              self.debugForms.info_message("metadata: " + str(metadata) )
               if(metadata != None and 'BG' in metadata):
                 self.debug.info_message("processing Button Group: \n")
                 split_metadata = metadata.split(',')
@@ -1872,7 +1803,7 @@ inbox dictionary items formatted as...
 
               if(rl == repeat_lines-1):
                 next_repeat_lines = 1
-                #self.debug.info_message("resetting repeat lines\n")
+                self.debugForms.info_message("resetting repeat lines\n")
 
 
     except:
@@ -2068,7 +1999,7 @@ inbox dictionary items formatted as...
         if(mylist[5] == True):
           content_count = content_count + 1  
         field_count = field_count + 1
-        self.debug.info_message("line : " + str(mylist) )
+        self.debugForms.info_message("line : " + str(mylist) )
 
       split_string = window_line.split('\n')
       for z in range(len(split_string)):
@@ -2138,9 +2069,9 @@ inbox dictionary items formatted as...
 
          [
           sg.Text('To: ', size=(5, 1)),
-          sg.InputText('', key='in_compose_selected_callsigns', size=(50, 1)),
+          sg.InputText('', key='in_compose_selected_callsigns', size=(70, 1)),
 
-          sg.Button('Compose Message', size=(15, 1), key='btn_cmpse_compose')],
+          sg.Button('Compose Message', size=(15, 1), key='btn_cmpse_compose', disabled = True)],
 
          [sg.Table(values=self.createSyntheticView(template_lookup['General Message'], form_content), headings=['Elements Page 1'],
                             max_col_width=116,
@@ -2150,8 +2081,6 @@ inbox dictionary items formatted as...
                             enable_events=True,
                             select_mode=sg.TABLE_SELECT_MODE_EXTENDED,
                             num_rows=25, key='table_compose_preview', font=("Courier New", 10))],
-
-
 
     ]
     
@@ -2166,6 +2095,8 @@ inbox dictionary items formatted as...
     combo_list_2    = 'General Message,ICS-213'.split(',')
     combo_list_3    = '20 CHARS,40 CHARS,80 CHARS'.split(',')
     combo_sendto    = 'Rig 1 - JS8,Rig 1 - Fldigi,Rig 2 - JS8,Fig 2 - Fldigi'.split(',')
+    
+    combo_wide      = 'HF - 500,VHF/UHF - 1000,VHF/UHF - 2000,VHF/UHF - 3000'.split(',')
     combo_premsg    = 'Message IDs,Message Callsigns,Grid Square,GPS LATLONG,QTH'.split(',')
     combo_mode1     = 'SLOW,NORMAL,FAST,TURBO'.split(',')
     if(self.group_arq.saamfram.fldigi_modes != ''):
@@ -2181,7 +2112,8 @@ Channel 5 - 1000Hz - 1125Hz,Channel 6 - 1125Hz - 1250Hz,Channel 7 - 1250Hz - 137
 Channel 9 - 1500Hz - 1625Hz,Channel 10 - 1625Hz - 1750Hz,Channel 11 - 1750Hz - 1875Hz,Channel 12 - 1875Hz - 2000Hz,\
 Channel 13 - 2000Hz - 2125Hz,Channel 14 - 2125Hz - 2250Hz,Channel 15 - 2250Hz - 2375Hz,Channel 16 - 2375Hz - 2500Hz'.split(',')
 
-    option_colors   = 'red,orange,yellow,green,green1,purple,blue,indigo,violet,gray,dark gray,white,black,cyan'.split(',')
+    option_colors   = 'red,tomato,DeepPink3,orange,yellow,green,green1,forest green,purple,purple3,blue,blue2,blue4,steel blue,LightSkyBlue4,SkyBlue4,indigo,violet,\
+dark violet,gray,magenta2,slate gray,slategray4,grey30,grey60,dark gray,white,black,turquoise1,cyan,khaki,dark khaki,olive drab,ivory2,plum1,orchid1,OliveDrab1,thistle2'.split(',')
     combo_numtimes_frag  = 'f1x2,f1x3,f1+f2x2,f1+f2x3,f1+f2+f3x2,f1+f2+f3x3'.split(',')
     combo_numtimes_msg  = 'x1,x2,x3'.split(',')
 
@@ -2189,10 +2121,6 @@ Channel 13 - 2000Hz - 2125Hz,Channel 14 - 2125Hz - 2250Hz,Channel 15 - 2250Hz - 
 Cont-4/500,Cont-16/1K,OLIVIA-4/1K'.split(',')
 
     combo_reply_tmplts  = 'ICS_305_REPLY, ICS_305_PG2, GENERIC_REPLY'.split(',')
-
-    templatefiles = [['ICS_Forms.txt'],['my_custom_templates.txt']]
-    self.group_arq.setTemplateFiles(templatefiles)
-    self.group_arq.addTemplateFile('std_forms.txt')
 
     self.layout_inbox = [
          [sg.Table(values=self.group_arq.getMessageInbox(), headings=['From', 'To', 'Subject', 'Rcvd Time', 'Important', 'Type', 'Completion', 'MSGID'],
@@ -2207,12 +2135,17 @@ Cont-4/500,Cont-16/1K,OLIVIA-4/1K'.split(',')
                             num_rows=5, key='table_inbox_messages')],
 
           [
-           sg.Button('View', size=(7, 1), key='btn_inbox_viewmsg'),
-           sg.Button('Copy', size=(7, 1), key='btn_inbox_copyclipboard'),
-           sg.Button('Paste', size=(7, 1), key='btn_inbox_pasteclipboard'),
-           sg.Button('Delete', size=(7, 1), key='btn_inbox_deleteselected'),
-           sg.Button('Delete All', size=(7, 1), key='btn_inbox_deleteall'),
-           sg.Button('Export', size=(7, 1), key='btncli_clear', visible = False),
+           sg.Button('View', size=(11, 1), key='btn_inbox_viewmsg'),
+           sg.Button('Copy', size=(11, 1), key='btn_inbox_copyclipboard'),
+           sg.Button('Paste', size=(11, 1), key='btn_inbox_pasteclipboard'),
+           sg.Button('Delete', size=(11, 1), key='btn_inbox_deleteselected'),
+           sg.Button('Delete All', size=(11, 1), key='btn_inbox_deleteall'),
+           sg.Button('Query Msg', size=(11, 1), key='btn_inbox_querydoyouhaveacopy'),
+           #sg.Button('QRYF', size=(10, 1), key='btn_inbox_querydoyouhavecopyfragments'),
+           sg.Button('Request Msg', size=(11, 1), key='btn_inbox_sendreqm'),
+           #sg.Button('REQF', size=(10, 1), key='btn_inbox_requestfragments'),
+           sg.Button('Request CRC', size=(11, 1), key='btn_inbox_requestchecksums'),
+           sg.Button('Export', size=(10, 1), key='btncli_clear', visible = False),
            sg.InputText('myfile.dat', key='sidebar_offset', size=(15, 1), visible=False),
            sg.Combo(combo_reply_tmplts, key='option_inbox_reply_template', enable_events=True, visible = False),
            sg.Button('Reply', size=(7, 1), key='btn_inbox_replytomsg', visible = False)],
@@ -2236,18 +2169,24 @@ Cont-4/500,Cont-16/1K,OLIVIA-4/1K'.split(',')
     ]
 
     self.layout_relay = [
-         [sg.Table(values=self.group_arq.getMessageRelaybox(), headings=['From', 'To', 'Subject', 'Rcvd Time', 'Important', 'Type', 'MSGID', 'coonfirmed', 'fragsize'],
+         [sg.Table(values=self.group_arq.getMessageRelaybox(), headings=['From', 'To', 'Subject', 'Rcvd Time', 'Important', 'Type', 'MSGID', 'confirmed', 'fragsize', 'Verified'],
                             max_col_width=65,
-                            col_widths=[10, 17, 20, 20, 8, 7, 13, 7],
+                            col_widths=[10, 12, 15, 15, 8, 7, 13, 7, 7, 7],
                             auto_size_columns=False,
                             justification='left',
                             enable_events=True,
                             select_mode=sg.TABLE_SELECT_MODE_EXTENDED,
                             num_rows=5, key='table_relay_messages')],
 
-          [sg.Button('Delete', size=(10, 1), key='btn_inbox_deleteselected'),
-           sg.Button('Delete All', size=(10, 1), key='btn_inbox_deleteall'),
-           sg.Button('REQM', key='btn_relay_sendreqm')],
+          [
+           sg.Button('Copy', size=(11, 1), key='btn_relay_copytoclipboard'),
+           sg.Button('Paste', size=(11, 1), key='btn_relay_pastefromclipboard'),
+           sg.Button('Delete', size=(11, 1), key='btn_relaybox_deleteselected'),
+           sg.Button('Delete All', size=(11, 1), key='btn_relaybox_deleteall'),
+           sg.Button('Add to Outbox', size=(11, 1), key='btn_relay_copytooutbox'),
+           sg.Button('Query Msg', size=(11, 1), key='btn_relay_querymessageorfragments'),
+           sg.Button('Request Msg', size=(11, 1), key='btn_relay_sendreqm'),
+           sg.Button('Request CRC', size=(11, 1), key='btn_relay_requestchecksums')],
 
     ]
 
@@ -2267,12 +2206,15 @@ Cont-4/500,Cont-16/1K,OLIVIA-4/1K'.split(',')
                             num_rows=5, key='table_outbox_messages')],
 
          [
-          sg.Button('View',   key='btn_outbox_viewform', size=(6, 1) ), 
-          sg.Button('Edit',   key='btn_outbox_editform', size=(6, 1) ), 
-          sg.Button('Delete',   key='btn_outbox_deletemsg', size=(6, 1) ), 
-          sg.Button('Delete All',   key='btn_outbox_deleteallmsg', size=(10, 1) ), 
-          sg.Button('Import from Clipboard',   key='btn_outbox_importfromclipboard', size=(20, 1) ), 
-          sg.Button('Send',   key='btn_outbox_sendselected', size=(6, 1) )], 
+          sg.Button('View',   key='btn_outbox_viewform', size=(11, 1) ), 
+          sg.Button('Copy',   key='btn_outbox_copytoclipboard', size=(11, 1) ), 
+          sg.Button('Paste',   key='btn_outbox_pastefromclipboard', size=(11, 1) ), 
+          sg.Button('Edit',   key='btn_outbox_editform', size=(11, 1) ), 
+          sg.Button('Delete',   key='btn_outbox_deletemsg', size=(11, 1) ), 
+          sg.Button('Delete All',   key='btn_outbox_deleteallmsg', size=(11, 1) ), 
+          sg.Button('Clipboard Import',   key='btn_outbox_importfromclipboard', size=(11, 1), visible = False ), 
+          sg.Button('Ready?', size=(11, 1), key='btn_compose_areyoureadytoreceive'),
+          sg.Button('Send',   key='btn_outbox_sendselected', size=(11, 1) )], 
 
          [
           sg.CBox('Pre Message:',  key='cb_outbox_includepremsg' ), 
@@ -2283,7 +2225,7 @@ Cont-4/500,Cont-16/1K,OLIVIA-4/1K'.split(',')
           sg.OptionMenu(combo_numtimes_frag, default_value=combo_numtimes_frag[0], key='option_repeatfragtimes'),
           sg.CBox('Include Template', key='cb_outbox_includetmpl'),
           sg.Text('Fragment Size:' ), 
-          sg.OptionMenu(combo_fragtypes, default_value=combo_fragtypes[0], key='option_framesize')],
+          sg.OptionMenu(combo_fragtypes, default_value=combo_fragtypes[2], key='option_framesize')],
 
 
           [
@@ -2309,8 +2251,8 @@ Cont-4/500,Cont-16/1K,OLIVIA-4/1K'.split(',')
                             select_mode=sg.TABLE_SELECT_MODE_EXTENDED,
                             num_rows=5, key='table_sent_messages')],
 
-         [sg.Button('Delete',   key='btn_sentbox_deletemsg', size=(6, 1) ), 
-          sg.Button('Delete All',   key='btn_sentbox_deleteallmsg', size=(10, 1) )], 
+         [sg.Button('Delete',   key='btn_sentbox_deletemsg', size=(11, 1) ), 
+          sg.Button('Delete All',   key='btn_sentbox_deleteallmsg', size=(11, 1) )], 
 
 
          [sg.Table(values=[], headings=['Preview'],
@@ -2332,7 +2274,7 @@ Cont-4/500,Cont-16/1K,OLIVIA-4/1K'.split(',')
 
                         [sg.Table(values=self.group_arq.getTemplateFiles(), headings=['File'],
                             max_col_width=65,
-                            col_widths=[15],
+                            col_widths=[30],
                             auto_size_columns=False,
                             justification='left',
                             enable_events=True,
@@ -2341,12 +2283,16 @@ Cont-4/500,Cont-16/1K,OLIVIA-4/1K'.split(',')
 
                         sg.Table(values=self.group_arq.getLoadedTemplateFiles(), headings=['File', 'Description', 'Ver'],
                             max_col_width=65,
-                            col_widths=[15, 10, 5],
+                            col_widths=[25, 20, 6],
                             auto_size_columns=False,
                             justification='left',
                             enable_events=True,
                             select_mode=sg.TABLE_SELECT_MODE_EXTENDED,
                             num_rows=3, key='tbl_tmplt_files', font=("Courier New", 10))],
+
+                        [
+                         sg.Text('Template Folder:', size=(15, 1) ),
+                         sg.InputText('./' if (platform.system() == 'Linux') else '.\\', key='in_settings_templatefolder', size=(20, 1) )],
 
                         [
                          sg.Button('List',   key='btn_settings_list', size=(6, 1) ), 
@@ -2357,8 +2303,6 @@ Cont-4/500,Cont-16/1K,OLIVIA-4/1K'.split(',')
                          
                         [ sg.CBox('Auto load', default = js.get("params").get('AutoLoadTemplate'), key='cb_settings_autoload', enable_events=True),
                           sg.CBox('Save Partial Messages', key='cb_settings_savepartialmsgs', enable_events=True, visible = False)],
-
-                        #[sg.Text('_'*100 )], 
 
                         [sg.CBox('Trust original sender only', key='cb_settings_trustorigsndronly', default = js.get("params").get('TrustOrigSenderOnly'), visible = False),
                          sg.Text('Trusted Relays:', size=(15, 1), visible = False),
@@ -2469,39 +2413,42 @@ Cont-4/500,Cont-16/1K,OLIVIA-4/1K'.split(',')
                             select_mode=sg.TABLE_SELECT_MODE_EXTENDED,
                             num_rows=5, key='tbl_compose_stationcapabilities')],
 
-                       [sg.Button('Checkin - SAAM CKIN', size=(20, 1), key='btn_compose_saam'),
-                        sg.Button('Who\'s online - SAAM?', size=(20, 1), key='btn_compose_qrysaam'),
-                        sg.Button('Going QRT - SAAM QRT', size=(20, 1), key='btn_compose_goingqrtsaam'),
-                        sg.Button('Abort', size=(10, 1), key='btn_compose_abortsend')],
-                       
+                       [sg.Button('Who\'s on Fre?', size=(11, 1), key='btn_compose_qrysaam'),
+                        sg.Button('Check-In', size=(11, 1), key='btn_compose_saam'),
+                        sg.Button('Going QRT', size=(11, 1), key='btn_compose_goingqrtsaam'),
+                        sg.Button('Confirmed', size=(11, 1), key='btn_compose_confirmedhavecopy'),
+                        sg.Button('Ready to Rcv', size=(11, 1), key='btn_compose_readytoreceive'),
+                        sg.Button('Not Ready', size=(11, 1), key='btn_compose_notreadytoreceive'),
+                        sg.Button('Already Have', size=(11, 1), key='btn_compose_cancelalreadyhavecopy'),
+                        sg.Button('Abort', size=(11, 1), key='btn_compose_abortsend')],
 
                        [
-                        sg.CBox('Active TX Channel: ', key='cb_mainwindow_acttxchan'),
-                        sg.InputText('', size=(30, 1), key='in_mainwindow_activetxchannel' ), 
+                        sg.CBox('Active TX Channel: ', key='cb_mainwindow_acttxchan', visible = False),
+                        sg.InputText('', size=(30, 1), key='in_mainwindow_activetxchannel', visible = False ), 
+
+                        sg.Text('Fldigi Mode:', size=(5, 1), visible = True if (self.group_arq.send_mode_rig1 == cn.SEND_FLDIGI) else False ), 
+                        sg.Combo(combo_mode2, default_value=combo_mode2[4], key='option_outbox_fldigimode', enable_events = True, visible = True if (self.group_arq.send_mode_rig1 == cn.SEND_FLDIGI) else False),
+
+                        sg.Text('Channel:' ), 
+                        sg.Combo(combo_channels, key='combo_settings_channels', default_value=combo_channels[8], enable_events=True),
 
                         sg.Text('Send To:', size=(7, 1) ), 
-                        sg.OptionMenu(combo_sendto, default_value=combo_sendto[0], key='option_outbox_txrig'),
-                        sg.CBox('500Hz only', key='cb_mainwindow_show500hzonly')],
+                        sg.Combo(combo_sendto, default_value=combo_sendto[0], key='option_outbox_txrig'),
+                        sg.Text('Width:', size=(7, 1) ), 
+                        sg.Combo(combo_wide, default_value=combo_wide[0], key='combo_main_signalwidth', enable_events=True)],
  
                        [
-                        sg.CBox('Active RX Channel: ', key='cb_mainwindow_actrxchan'),
-                        sg.InputText('', size=(30, 1), key='in_mainwindow_activerxchannel' ), 
+                        sg.CBox('Active RX Channel: ', key='cb_mainwindow_actrxchan', visible = False),
+                        sg.InputText('', size=(30, 1), key='in_mainwindow_activerxchannel', visible = False ), 
                        
-                        sg.Text('Receive From: '),
+                        sg.Text('Connect To: ', key='text_mainarea_connect_to'),
                         sg.InputText('', key='in_inbox_listentostation', size=(20, 1), disabled=False),
-                        sg.CBox('Auto Receive', key='cb_mainwindow_autoacceptps')],
+                        sg.CBox('Auto Receive', key='cb_mainwindow_autoacceptps', default = js.get("params").get('AutoReceive'))],
 
                        [ sg.Text('Fldigi mode: ', size=(15, 1) , visible = False      ), 
                          sg.Combo(combo_fldigi_modes, key='combo_settings_fldigimoode1', enable_events=True, visible = False),
-                         sg.Text('Channel:' ), 
-                         sg.Combo(combo_channels, key='combo_settings_channels', default_value=combo_channels[8], enable_events=True),
                          sg.Text('JS8Call Mode:', size=(5, 1), visible = True if (self.group_arq.send_mode_rig1 == cn.SEND_JS8CALL) else False ), 
-                         sg.Combo(combo_mode1, default_value=combo_mode1[0], key='option_outbox_js8callmode', disabled = True, enable_events = True, visible = True if (self.group_arq.send_mode_rig1 == cn.SEND_JS8CALL) else False),
-                         #sg.Text('Fldigi Mode:', size=(5, 1) ), 
-                         #sg.Combo(combo_mode2, default_value=combo_mode2[4], key='option_outbox_fldigimode', enable_events = True)],
-                         sg.Text('Fldigi Mode:', size=(5, 1), visible = True if (self.group_arq.send_mode_rig1 == cn.SEND_FLDIGI) else False ), 
-                         sg.Combo(combo_mode2, default_value=combo_mode2[4], key='option_outbox_fldigimode', enable_events = True, visible = True if (self.group_arq.send_mode_rig1 == cn.SEND_FLDIGI) else False)],
-
+                         sg.Combo(combo_mode1, default_value=combo_mode1[0], key='option_outbox_js8callmode', disabled = True, enable_events = True, visible = True if (self.group_arq.send_mode_rig1 == cn.SEND_JS8CALL) else False)],
 
                        [sg.MLine('', size=(64, 10), key='ml_mainwindow_textarea_1', background_color='Green1', font=("Courier New", 9), autoscroll=True, visible=False), 
                         sg.MLine('', size=(64, 10), key='ml_mainwindow_textarea_2', background_color='Green1', font=("Courier New", 9), autoscroll=True, visible=False)], 
@@ -2532,7 +2479,12 @@ Cont-4/500,Cont-16/1K,OLIVIA-4/1K'.split(',')
         try:
           self.form_events.dispatch[event](self.form_events, values)
         except:
-          self.debug.error_message("Exception in runPopup: " + str(sys.exc_info()[0]) + str(sys.exc_info()[1] ))
+          if(event == '__TIMEOUT__'):
+            self.debug.info_message("Timeout in runPopup")
+          elif(event == 'Close'):
+            self.debug.info_message("Close popup window in runPopup")
+          else:
+            self.debug.error_message("Exception in runPopup: " + str(sys.exc_info()[0]) + str(sys.exc_info()[1] ))
 
         if event in ('Close', 'btn_prev_post_to_outbox', None):
           break

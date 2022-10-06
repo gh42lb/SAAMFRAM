@@ -75,8 +75,8 @@ class ReceiveControlsProc(object):
     self.flash_timer_group1 = 0
     self.flash_toggle_group1 = 0
     self.flash_buttons_group1 = {
-                                  'btn_compose_saam'     : ['False', 'gray,white', 'white,gray'],
-                                  'btn_compose_qrysaam'  : ['False', 'gray,white', 'white,gray'],
+                                  'btn_compose_saam'     : ['False', 'red,green1', 'green1,red'],
+                                  'btn_compose_qrysaam'  : ['False', 'red,green1', 'green1,red'],
                                 }
     
 
@@ -136,50 +136,84 @@ class ReceiveControlsProc(object):
   def event_catchall(self, values):
 
 
-    if(self.window_initialized == False):
+    if(self.window_initialized == False and self.form_gui.window != None):
       self.window_initialized = True		
-      self.group_arq.getSpeed()
+      """ select the initial category and form on the compose tab"""
+      self.form_gui.window['tbl_compose_categories'].update(select_rows=[0])
+
+      """ update the colors in the inbox"""
+      self.form_gui.window['table_inbox_messages'].update(values=self.group_arq.getMessageInbox() )
+      self.form_gui.window['table_inbox_messages'].update(row_colors=self.group_arq.getMessageInboxColors())
+
+      self.form_gui.window['table_relay_messages'].update(values=self.group_arq.getMessageRelaybox() )
+      self.form_gui.window['table_relay_messages'].update(row_colors=self.group_arq.getMessageRelayboxColors())
+
+
+      if(self.getSaamfram().tx_mode == 'JS8CALL'):
+        #combo_sendto = 'Rig 1 - JS8'.split(',')
+        self.form_gui.window['option_outbox_txrig'].update(values=['Rig 1 - JS8'])
+        self.form_gui.window['option_outbox_txrig'].update('Rig 1 - JS8')
+      elif(self.getSaamfram().tx_mode == 'FLDIGI'):
+        #combo_sendto = 'Rig 1 - JS8'.split(',')
+        self.form_gui.window['option_outbox_txrig'].update(values=['Rig 1 - FLDIGI'])
+        self.form_gui.window['option_outbox_txrig'].update('Rig 1 - FLDIGI')
+
+      #self.form_gui.window['tbl_compose_select_form'].update(select_rows=[0])
+
+      #FIXME THIS IS BROKEN!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+      #FIXME THIS IS BROKEN ALSO FOR FORM DEWSIGNER
+      #if(saam != None and saam.tx_mode == 'JS8CALL' and self.group_arq.formdesigner_mode == False):
+      #  self.group_arq.getSpeed()
 
 
     saam = self.getSaamfram()
     #FIXME NEED TO TEST IF USING JS8 OR FLDIGI 
-    if(saam != None and saam.tx_mode == 'JS8CALL'):
+    if(saam != None and saam.tx_mode == 'JS8CALL' and self.window_initialized == True):
       saam.processSendJS8()
 
-    """ need to poll JS8Call to get the speed"""
-    if(self.refresh_timer <30):
-      self.refresh_timer = self.refresh_timer + 1
-    elif(self.refresh_timer >=30):
-      self.group_arq.getSpeed()
-      self.refresh_timer = 0
+      """ need to poll JS8Call to get the speed"""
+      #FIXME THIS IS BROKEN ALSO FOR FORM DEWSIGNER
+      if(self.refresh_timer <30):
+        self.refresh_timer = self.refresh_timer + 1
+      elif(self.refresh_timer >=30):
+        self.group_arq.getSpeed()
+        self.refresh_timer = 0
 
 
-    if(self.flash_timer_group1 <6):
-      self.flash_timer_group1 = self.flash_timer_group1 + 1
-    elif(self.flash_timer_group1 >=6):
-      self.flash_timer_group1 = 0
+    if(self.group_arq.formdesigner_mode == False):
+      if(self.flash_timer_group1 <6):
+        self.flash_timer_group1 = self.flash_timer_group1 + 1
+      elif(self.flash_timer_group1 >=6):
+        self.flash_timer_group1 = 0
 
-      if(self.form_gui.window['in_inbox_listentostation'].get().strip() == ''):
-        self.changeFlashButtonState('btn_compose_qrysaam', True)
-      else:
-        self.changeFlashButtonState('btn_compose_qrysaam', False)
+        if(self.window_initialized == True and self.form_gui.window['in_inbox_listentostation'].get().strip() == ''):
+          #self.form_gui.window['text_mainarea_connect_to'].update(text_color='Red')
+          self.form_gui.window['in_inbox_listentostation'].update(background_color = 'Red')
+        else:
+          #self.form_gui.window['text_mainarea_connect_to'].update(text_color='White')
+          self.form_gui.window['in_inbox_listentostation'].update(background_color = 'White')
 
-      for key in self.flash_buttons_group1:
-        button_colors = self.flash_buttons_group1.get(key)
-        flash = button_colors[0]
-        if(flash == 'True'):
-          if(self.flash_toggle_group1 == 0 and values != None):
-            self.flash_toggle_group1 = 1
-            button_on = button_colors[1].split(',')
-            button_clr1_on = button_on[0]
-            button_clr2_on = button_on[1]
-            self.form_gui.window[key].Update(button_color=(button_clr1_on, button_clr2_on))
-          else:
-            self.flash_toggle_group1 = 0
-            button_off = button_colors[2].split(',')
-            button_clr1_off = button_off[0]
-            button_clr2_off = button_off[1]
-            self.form_gui.window[key].Update(button_color=(button_clr1_off, button_clr2_off))
+        if(self.form_gui.window['in_inbox_listentostation'].get().strip() == ''):
+          self.changeFlashButtonState('btn_compose_qrysaam', True)
+        else:
+          self.changeFlashButtonState('btn_compose_qrysaam', False)
+
+        for key in self.flash_buttons_group1:
+          button_colors = self.flash_buttons_group1.get(key)
+          flash = button_colors[0]
+          if(flash == 'True'):
+            if(self.flash_toggle_group1 == 0 and values != None):
+              self.flash_toggle_group1 = 1
+              button_on = button_colors[1].split(',')
+              button_clr1_on = button_on[0]
+              button_clr2_on = button_on[1]
+              self.form_gui.window[key].Update(button_color=(button_clr1_on, button_clr2_on))
+            else:
+              self.flash_toggle_group1 = 0
+              button_off = button_colors[2].split(',')
+              button_clr1_off = button_off[0]
+              button_clr2_off = button_off[1]
+              self.form_gui.window[key].Update(button_color=(button_clr1_off, button_clr2_off))
 	  
     return()
 
@@ -657,29 +691,14 @@ class ReceiveControlsProc(object):
 
     selected_stations = self.group_arq.getSelectedStations()
 
-    #self.debug.info_message("COMPOSE MESSAGE LOC 1\n")
-
     msgto = values['in_compose_selected_callsigns']
-
-    """
-    msgto = ''
-    for x in range(len(selected_stations)):
-      if(x>0):		
-        msgto = msgto + ';' + str(selected_stations[x])
-      else:		
-        msgto = msgto + str(selected_stations[x])
-    """
-
-    #self.debug.info_message("COMPOSE MESSAGE LOC 2\n")
-    
+   
     callsign = self.saamfram.getMyCall()
 
     self.debug.info_message("saamfram: " + str(self.saamfram) +  "\n")
 
     ID = self.saamfram.getEncodeUniqueId(callsign)
-
-    #self.debug.info_message("COMPOSE MESSAGE LOC 3\n")
-    
+   
     self.saamfram.getDecodeTimestampFromUniqueId(ID)
 
     self.debug.info_message("reverse encoded callsign is: " + self.group_arq.saamfram.getDecodeCallsignFromUniqueId(ID) )
@@ -768,7 +787,6 @@ class ReceiveControlsProc(object):
 
     form_content = self.form_dictionary.getContentFromOutboxDictionary(msgid)
 
-    #FIXME
     mytemplate = self.form_dictionary.getTemplateByFormFromTemplateDictionary(formname)
     use_dynamic_content_macro = False
     text_render, table_data, actual_render = self.form_gui.renderPage(mytemplate, use_dynamic_content_macro, form_content)
@@ -788,7 +806,6 @@ class ReceiveControlsProc(object):
 
     form_content = self.form_dictionary.getContentFromInboxDictionary(msgid)
 
-    #FIXME
     mytemplate = self.form_dictionary.getTemplateByFormFromTemplateDictionary(formname)
     use_dynamic_content_macro = False
     text_render, table_data, actual_render = self.form_gui.renderPage(mytemplate, use_dynamic_content_macro, form_content)
@@ -811,11 +828,6 @@ class ReceiveControlsProc(object):
     
     form_content = ['gfhjgfhj', 'asdf', 'gfhjgfhj', 'sadf']
 
-    #FIXME CATEOGRY AND FILENAME COME FROM WHERE?
-    # need to search thru all the loaded templates for a match!!!!
-    #getVersionFromContentString(data)
-    #getCategoryFromDictionary(formname, version)
-
     category, filename = self.form_dictionary.getCategoryAndFilenameFromFormname(formname)
 
     form_content = self.form_dictionary.getContentFromOutboxDictionary(ID)
@@ -833,17 +845,14 @@ class ReceiveControlsProc(object):
     except:  
       self.debug.error_message("Exception in event_settingslist: " + str(sys.exc_info()[0]) + str(sys.exc_info()[1] ))
 
-    operating_system = platform.system()
-    self.debug.info_message("operating system is: " + operating_system )
-
     """ Code to locate all the template files """
     self.group_arq.clearTemplateFiles()
-    if(operating_system == 'Linux'):        
-      dir_list = os.listdir('./')
-      for x in dir_list:
-        if x.endswith(".tpl"):
-          self.debug.info_message("template file located: " + str(x) )
-          self.group_arq.addTemplateFile(str(x))
+    folder = values['in_settings_templatefolder']
+    dir_list = os.listdir(folder)
+    for x in dir_list:
+      if x.endswith(".tpl"):
+        self.debug.info_message("template file located: " + str(x) )
+        self.group_arq.addTemplateFile(str(x))
     self.form_gui.window['tbl_layout_all_files'].update(self.group_arq.getTemplateFiles())
 
     return
@@ -905,7 +914,6 @@ class ReceiveControlsProc(object):
 
     self.form_dictionary.transferOutboxMsgToRelaybox(msgid)
     self.form_gui.window['table_relay_messages'].update(values=self.group_arq.getMessageRelaybox() )
-    #self.form_gui.window['tbl_compose_selectedstations'].update(row_colors=self.group_arq.getSelectedStationsColors())
 
     self.form_gui.window['table_sent_messages'].update(values=self.group_arq.getMessageSentbox() )
     self.form_gui.window['table_outbox_messages'].update(values=self.group_arq.getMessageOutbox() )
@@ -1023,6 +1031,35 @@ class ReceiveControlsProc(object):
 
     return
 
+
+  def event_relayboxdeleteselected(self, values):
+    self.debug.info_message("EVENT RELAYBOX DELETE SELECTED\n")
+
+    line_index = int(values['table_relay_messages'][0])
+    msgid = (self.group_arq.getMessageRelaybox()[line_index])[6]
+
+    self.form_dictionary.relaybox_file_dictionary_data.pop(msgid, None)
+    self.group_arq.deleteMessageFromRelaybox(msgid)
+    self.form_gui.window['table_relay_messages'].update(values=self.group_arq.getMessageRelaybox() )
+
+    return
+
+  def event_relayboxdeleteall(self, values):
+    self.debug.info_message("EVENT RELAYBOX DELETE ALL\n")
+
+    for line_index in reversed(range(len(self.group_arq.getMessageRelaybox()))):
+      msgid = (self.group_arq.getMessageRelaybox()[line_index])[6]
+      self.group_arq.deleteMessageFromRelaybox(msgid)
+
+    self.form_gui.window['table_relay_messages'].update(values=self.group_arq.getMessageRelaybox() )
+
+    self.form_dictionary.resetRelayboxDictionary()
+
+    return
+
+
+
+
   def event_tablesentmessages(self, values):
     self.debug.info_message("EVENT TABLE SENT MESSAGES\n")
 
@@ -1117,6 +1154,10 @@ class ReceiveControlsProc(object):
     field_2 = (self.group_arq.getTemplates()[line_index])[1]
     field_3 = (self.group_arq.getTemplates()[line_index])[2]
     field_4 = (self.group_arq.getTemplates()[line_index])[3]
+
+    """ enable the compose button on compose tab"""
+    self.form_gui.window['btn_cmpse_compose'].update(disabled = False)
+
 
     edit_list = self.form_dictionary.getDataFromDictionary(field_1, field_2, field_3, field_4)
 
@@ -1230,7 +1271,6 @@ class ReceiveControlsProc(object):
 
     line_index = int(values['table_inbox_messages'][0])
     ID = (self.group_arq.getMessageInbox()[line_index])[7]
-
     formname = (self.group_arq.getMessageInbox()[line_index])[5]
     category, filename = self.form_dictionary.getCategoryAndFilenameFromFormname(formname)
 
@@ -1250,12 +1290,10 @@ class ReceiveControlsProc(object):
     self.group_arq.saamfram.getDecodeTimestampFromUniqueId(ID)
 
     self.debug.info_message("reverse encoded callsign is: " + self.group_arq.saamfram.getDecodeCallsignFromUniqueId(ID) )
-
     self.debug.info_message("UNIQUE ID USING UUID IS: " + str(ID) )
+
     subject = ''
-
     window = self.form_gui.createInboxViewReplyWindow(formname, form_content, category, msgto, filename, ID, subject, False, False, False)
-
     dispatcher = PopupControlsProc(self, window)
     self.form_gui.runPopup(self, dispatcher, window)
 
@@ -1610,9 +1648,6 @@ class ReceiveControlsProc(object):
       self.form_gui.window['btn_inbox_replytomsg'].update(button_color=(wording_color, txbtn_color))
       self.form_gui.window['btn_inbox_sendacknack'].update(button_color=(wording_color, txbtn_color))
       self.form_gui.window['btn_outbox_sendselected'].update(button_color=(wording_color, txbtn_color))
-      self.form_gui.window['btn_outbox_sendall'].update(button_color=(wording_color, txbtn_color))
-      self.form_gui.window['btn_outbox_reqconfirm'].update(button_color=(wording_color, txbtn_color))
-      self.form_gui.window['btn_outbox_pleaseconfirm'].update(button_color=(wording_color, txbtn_color))
 
       self.debug.info_message("DONE COLORS UPDATE\n")
     except:
@@ -1667,6 +1702,44 @@ class ReceiveControlsProc(object):
     sender_call = self.saamfram.getSenderCall()
     self.saamfram.sendREQM(from_call, sender_call, selected_msgid)
 
+  def event_btninboxsendreqm(self, values):
+    self.debug.info_message("event_btninboxsendreqm\n")
+
+    line_index = int(values['table_inbox_messages'][0])
+    selected_msgid = (self.group_arq.getMessageInbox()[line_index])[7]
+
+    self.debug.info_message("selected msgid: " + str(selected_msgid) )
+
+    from_call = self.saamfram.getMyCall()
+    sender_call = self.saamfram.getSenderCall()
+    self.saamfram.sendREQM(from_call, sender_call, selected_msgid)
+
+
+  def event_btncomposegoingqrtsaam(self, values):
+    self.debug.info_message("event_btncomposegoingqrtsaam\n")
+    self.saamfram.sendSaamQrt()
+
+  def event_btncomposeconfirmedhavecopy(self, values):
+    self.debug.info_message("event_btncomposeconfirmedhavecopy\n")
+    self.saamfram.sendConf()
+
+  def event_btncomposeareyoureadytoreceive(self, values):
+    self.debug.info_message("event_btncomposeareyoureadytoreceive\n")
+    self.saamfram.sendQryReady()
+
+  def event_btncomposereadytoreceive(self, values):
+    self.debug.info_message("event_btncomposereadytoreceive\n")
+    self.saamfram.sendReadyToReceive()
+
+  def event_btncomposenotreadytoreceive(self, values):
+    self.debug.info_message("event_btncomposenotreadytoreceive\n")
+    self.saamfram.sendNotReady()
+
+  def event_btncomposecancelalreadyhavecopy(self, values):
+    self.debug.info_message("event_btncomposecancelalreadyhavecopy\n")
+    self.saamfram.sendCancelHaveCopy()
+
+
 
   def event_combosettingschannels(self, values):
     self.debug.info_message("event_combosettingschannels\n")
@@ -1678,14 +1751,73 @@ class ReceiveControlsProc(object):
       dial = 7095000
       offset = int(channel.split('Hz')[0])
       self.group_arq.setDialAndOffset(dial, offset)
-
-      #self.group_arq.setSpeed(cn.JS8CALL_SPEED_TURBO)
       self.group_arq.setSpeed(cn.JS8CALL_SPEED_NORMAL)
-
-
 
     else:
       self.group_arq.fldigiclient.setChannel(channel.split('Hz')[0])
+
+
+  def event_combomainsignalwidth(self, values):
+    self.debug.info_message("event_combomainsignalwidth\n")
+
+    selected_width = values['combo_main_signalwidth']
+    if(selected_width == 'HF - 500'):
+      new_selection_list = 'MODE 5 - QPSK500,MODE 8 - BPSK500,MODE 13 - 8PSK125,MODE 14 - 8PSK250F,MODE 15 - 8PSK250FL,MODE 16 - PSK500R,\
+MODE 18 - QPSK250,MODE 19 - BPSK250,MODE 22 - 8PSK125FL,MODE 23 - 8PSK125F,MODE 24 - PSK250R,MODE 25 - PSK63RC4,MODE 26 - DOMX22,\
+MODE 28 - DOMX16'.split(',')
+      self.form_gui.window['option_outbox_fldigimode'].update(values=new_selection_list )
+      self.form_gui.window['option_outbox_fldigimode'].update(new_selection_list[0] )
+      self.group_arq.saamfram.fldigiclient.setMode('QPSK500')
+    elif(selected_width == 'VHF/UHF - 1000'):
+      new_selection_list = 'MODE 5 - QPSK500,MODE 8 - BPSK500,MODE 9 - PSK1000R,MODE 12 - PSK250RC3,MODE 13 - 8PSK125,MODE 14 - 8PSK250F,\
+MODE 15 - 8PSK250FL,MODE 16 - PSK500R,MODE 17 - PSK250RC2,MODE 18 - QPSK250,MODE 19 - BPSK250,MODE 20 - PSK125RC4,MODE 22 - 8PSK125FL,\
+MODE 23 - 8PSK125F,MODE 24 - PSK250R,MODE 25 - PSK63RC4,MODE 26 - DOMX22,MODE 27 - OLIVIA-4/1K,MODE 28 - DOMX16'.split(',')
+      self.form_gui.window['option_outbox_fldigimode'].update(values=new_selection_list )
+      self.form_gui.window['option_outbox_fldigimode'].update(new_selection_list[0] )
+      self.group_arq.saamfram.fldigiclient.setMode('QPSK500')
+    elif(selected_width == 'VHF/UHF - 2000'):
+      new_selection_list = 'MODE 3 - PSK800RC2,MODE 4 - PSK250RC6,MODE 5 - QPSK500,MODE 6 - PSK500RC3,MODE 7 - PSK250RC5,MODE 8 - BPSK500,\
+MODE 9 - PSK1000R,MODE 10 - PSK500RC2,MODE 11 - DOMX88,MODE 12 - PSK250RC3,MODE 13 - 8PSK125,MODE 14 - 8PSK250F,MODE 15 - 8PSK250FL,\
+MODE 16 - PSK500R,MODE 17 - PSK250RC2,MODE 18 - QPSK250,MODE 19 - BPSK250,MODE 20 - PSK125RC4,MODE 21 - DOMX44,MODE 22 - 8PSK125FL,\
+MODE 23 - 8PSK125F,MODE 24 - PSK250R,MODE 25 - PSK63RC4,MODE 26 - DOMX22,MODE 27 - OLIVIA-4/1K,MODE 28 - DOMX16'.split(',')
+      self.form_gui.window['option_outbox_fldigimode'].update(values=new_selection_list )
+      self.form_gui.window['option_outbox_fldigimode'].update(new_selection_list[0] )
+      self.group_arq.saamfram.fldigiclient.setMode('PSK800RC2')
+    elif(selected_width == 'VHF/UHF - 3000'):
+      new_selection_list = 'MODE 1 - PSK1000RC2,MODE 2 - PSK500RC4,MODE 3 - PSK800RC2,MODE 4 - PSK250RC6,MODE 5 - QPSK500,MODE 6 - PSK500RC3,\
+MODE 7 - PSK250RC5,MODE 8 - BPSK500,MODE 9 - PSK1000R,MODE 10 - PSK500RC2,MODE 11 - DOMX88,MODE 12 - PSK250RC3,MODE 13 - 8PSK125,MODE 14 - 8PSK250F,\
+MODE 15 - 8PSK250FL,MODE 16 - PSK500R,MODE 17 - PSK250RC2,MODE 18 - QPSK250,MODE 19 - BPSK250,MODE 20 - PSK125RC4,MODE 21 - DOMX44,MODE 22 - 8PSK125FL,\
+MODE 23 - 8PSK125F,MODE 24 - PSK250R,MODE 25 - PSK63RC4,MODE 26 - DOMX22,MODE 27 - OLIVIA-4/1K,MODE 28 - DOMX16'.split(',')
+      self.form_gui.window['option_outbox_fldigimode'].update(values=new_selection_list )
+      self.form_gui.window['option_outbox_fldigimode'].update(new_selection_list[0] )
+      self.group_arq.saamfram.fldigiclient.setMode('PSK1000RC2')
+      #self.group_arq.saamfram.fldigiclient.setChannel('500')
+
+
+  def event_btnoutboxviewform(self, values):
+    self.debug.info_message("event_btnoutboxviewform")
+
+    line_index = int(values['table_outbox_messages'][0])
+    ID = (self.group_arq.getMessageOutbox()[line_index])[6]
+    formname = (self.group_arq.getMessageOutbox()[line_index])[5]
+    category, filename = self.form_dictionary.getCategoryAndFilenameFromFormname(formname)
+
+    form_content = ['', '', '', '']
+
+    self.debug.info_message("SELECTED CATEGORY IS: "  + category )
+    self.debug.info_message("SELECTED FORMNAME IS: "  + formname )
+    
+    msgto = ''
+    self.group_arq.saamfram.getDecodeTimestampFromUniqueId(ID)
+
+    self.debug.info_message("reverse encoded callsign is: " + self.group_arq.saamfram.getDecodeCallsignFromUniqueId(ID) )
+    self.debug.info_message("UNIQUE ID USING UUID IS: " + str(ID) )
+
+    subject = ''
+    window = self.form_gui.createInboxViewReplyWindow(formname, form_content, category, msgto, filename, ID, subject, False, False, False)
+    dispatcher = PopupControlsProc(self, window)
+    self.form_gui.runPopup(self, dispatcher, window)
+
 
 
   def event_optionoutboxjs8callmode(self, values):
@@ -1703,10 +1835,6 @@ class ReceiveControlsProc(object):
         self.group_arq.setSpeed(cn.JS8CALL_SPEED_FAST)
       if(speed == 'TURBO'):
         self.group_arq.setSpeed(cn.JS8CALL_SPEED_TURBO)
-
-    #else:
-    #  self.group_arq.fldigiclient.setChannel(channel.split('Hz')[0])
-
 
   def event_comboelement1(self, values):
     self.debug.info_message("COMBO ELEMENT 1\n")
@@ -1816,6 +1944,8 @@ class ReceiveControlsProc(object):
       'btn_outbox_sendall'        : event_outboxsendall,
       'btn_inbox_deleteselected'  : event_inboxdeleteselected,
       'btn_inbox_deleteall'       : event_inboxdeleteall,
+      'btn_relaybox_deleteselected'  : event_relayboxdeleteselected,
+      'btn_relaybox_deleteall'       : event_relayboxdeleteall,
       'table_sent_messages'       : event_tablesentmessages,
       'btn_outbox_reqconfirm'     : event_outboxreqconfirm,
       'btn_inbox_rcvstatus'       : event_inboxrcvstatus,
@@ -1845,8 +1975,19 @@ class ReceiveControlsProc(object):
       'tbl_compose_stationcapabilities' : event_composestationcapabilities,
       'btn_compose_abortsend'     : event_btncomposeabortsend,
       'btn_relay_sendreqm'        : event_btnrelaysendreqm,
+      'btn_inbox_sendreqm'        : event_btninboxsendreqm,
       'combo_settings_channels'   : event_combosettingschannels,
       'option_outbox_js8callmode' : event_optionoutboxjs8callmode,
+      'combo_main_signalwidth'    : event_combomainsignalwidth,
+
+      'btn_compose_goingqrtsaam'          : event_btncomposegoingqrtsaam,
+      'btn_compose_confirmedhavecopy'     : event_btncomposeconfirmedhavecopy,
+      'btn_compose_areyoureadytoreceive'  : event_btncomposeareyoureadytoreceive,
+      'btn_compose_readytoreceive'        : event_btncomposereadytoreceive,
+      'btn_compose_notreadytoreceive'     : event_btncomposenotreadytoreceive,
+      'btn_compose_cancelalreadyhavecopy' : event_btncomposecancelalreadyhavecopy,
+      'btn_outbox_viewform'       : event_btnoutboxviewform,
+      
       'combo_element1'            : event_comboelement1,
       'combo_element2'            : event_comboelement2,
       'combo_element3'            : event_comboelement3,

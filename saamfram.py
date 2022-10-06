@@ -76,9 +76,11 @@ class SAAMFRAM(object):
     self.groupname = "@HINET"
     self.chars = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ"
     self.js8_tx_speed = 'TURBO'
-    #self.tx_mode = 'JS8CALL'
-    self.tx_mode = 'FLDIGI'
+    self.tx_mode = ''
     self.last_selected_channel_view_line = -1
+    self.main_params = js
+
+    self.last_displayed_debug_message = ''
 
     self.base32_chars = "0123456789ABCDEFGHIJKLMNOPQRSTUV"
 
@@ -101,7 +103,7 @@ class SAAMFRAM(object):
     self.comm_strings = 'COMM_NONE,COMM_LISTEN,COMM_RECEIVING,COMM_QUEUED_TXMSG,COMM_SENDING,COMM_AWAIT_REPLY,COMM_AWAIT_ACKNACK,COMM_AWAIT_RESEND'.split(',')
 
   def getSenderCall(self):
-    if(self.form_gui.window != None and self.form_gui.form_events.window_initialized == True):
+    if(self.form_gui.window != None and self.form_gui.form_events.window_initialized == True and self.group_arq.formdesigner_mode == False):
       return self.form_gui.window['in_inbox_listentostation'].get()
     else:
       return '' 
@@ -382,7 +384,7 @@ class SAAMFRAM(object):
   def createAndSetRxRig(self, rig):
     self.debug.info_message("CREATE AND SET RX RIG\n")
     self.active_rig = 'Rig1'
-    self.active_channel = self.addChannelItem('Rig1', 'FLDIGI', 'CONTESIA 4-500', '1500', '', '')
+    self.active_channel = self.addChannelItem('Rig1', 'FLDIGI', 'Fldigi RX', '1500', '', '')
 
     self.debug.info_message("active channel: " + self.active_channel )
     return
@@ -408,7 +410,7 @@ class SAAMFRAM(object):
       self.debug.info_message("SET TX RIG: " + txrig )
       tx_rig = 'Rig1'
       self.tx_mode = 'FLDIGI'
-      self.tx_mode_name = 'Contesia4-500'
+      self.tx_mode_name = 'Fldigi TX'
 
       if(self.doesRigItemExist(tx_rig) == False):
         self.createRigItem(tx_rig, self.fldigiclient, self.js8client)
@@ -434,7 +436,7 @@ class SAAMFRAM(object):
     elif(txrig == 'Fig 2 - Fldigi'):
       tx_rig = 'Rig2'
       self.tx_mode = 'FLDIGI'
-      self.tx_mode_name = 'Contesia4-500'
+      self.tx_mode_name = 'Fldigi TX'
 
       if(self.doesRigItemExist(tx_rig) == False):
         self.createRigItem(tx_rig, self.fldigiclient, self.js8client)
@@ -450,13 +452,6 @@ class SAAMFRAM(object):
 
   def queryTransmitChannelJS8(self, rigname):
     return self.queryChannelItem(rigname, 'JS8CALL', self.js8_tx_speed, 'TX' )
-
-
-  """ this method searches through all rcv channels for the rig to find the active (as opposed to passive) rcv channel"""
-  """ active rcv channel is selected by the end user in the GUI and then locked (GIU field grayed) while in session until transfer complete or aborted"""
-  #def queryActiveRcvChannelJS8(self, rigname):
-  #  return
-
 
 
   def createNackCodeJS8(self, string, num_fragments):
@@ -589,14 +584,9 @@ class SAAMFRAM(object):
     self.debug.info_message("number of fragments transmitted : " + str(num_fragments) )
 
     all_missing = self.decodeNackCodeReceivedJS8(nack_code, self.active_rig)
-    #self.debug.info_message("decode Nack Code Missing LOC 2\n")
     if(self.getIndexForChar(all_missing[len(all_missing)-1]) >= num_fragments):
-      #self.debug.info_message("decode Nack Code Missing LOC 3\n")
       for x in range(self.getIndexForChar(all_missing[len(all_missing)-1]), num_fragments):
-        #self.debug.info_message("decode Nack Code Missing LOC 4\n")
         all_missing = all_missing + self.chars[x]
-
-    #self.debug.info_message("decode Nack Code Missing LOC 5\n")
 
     return all_missing
 
@@ -609,6 +599,12 @@ class SAAMFRAM(object):
 
   def getEomMarker(self):
     return self.eom_marker
+
+  def getEosMarker(self):
+    return 'EOS'
+
+  def getBosMarker(self):
+    return 'BOS'
 
   def getPreMessage(self):
     return self.pre_message
@@ -654,20 +650,14 @@ class SAAMFRAM(object):
 
     if(rigname != ''):
       if(fldigiclient != None):
-        #self.debug.info_message("create rig item LOC 2\n")
         fldigiclient.setRigName(rigname)
       #if(js8client != None):
       #  js8client.setRigName(rigname)
-
-      #self.debug.info_message("create rig item LOC 3\n")
 
       rigdictionaryitem = { 'fldigiclient'  : fldigiclient,
                             'js8client'     : js8client,
                             'channels'      : {},
                           }       
-
-      #self.debug.info_message("create rig item LOC 4\n")
-
 
       self.rig_channel_dictionary[rigname] = rigdictionaryitem
 
@@ -1050,8 +1040,6 @@ class SAAMFRAM(object):
     end_count = -1
     repeat_mid = 0
 
-    #self.debug.info_message("fragtagmsg LOC 1\n")
-
     if(repeat_fragments == 3):
       third_count = int(len(frag_string)/3)
       two_third_count = int((len(frag_string)*2)/3)
@@ -1102,7 +1090,6 @@ class SAAMFRAM(object):
     fragtagmsg = ''
 
     if(x == third_count):
-      #self.debug.info_message("fragtagmsg LOC 3a\n")
       if(repeat_thirds >= 3):
         """ sequence 2,3,1"""
         fragtagmsg = fragtagmsg + self.getReceivedString('[' + self.getCharForIndex(1), self.tx_rig, self.tx_channel)
@@ -1116,7 +1103,6 @@ class SAAMFRAM(object):
         """ sequence 1"""
         fragtagmsg = fragtagmsg + self.getReceivedString('[' + self.getCharForIndex(0), self.tx_rig, self.tx_channel)
     elif(x == two_third_count):
-      #self.debug.info_message("fragtagmsg LOC 3b\n")
       if(repeat_thirds >= 3):
         """ sequence 2,1,3"""
         fragtagmsg = fragtagmsg + self.getReceivedString('[' + self.getCharForIndex(1), self.tx_rig, self.tx_channel)
@@ -1130,7 +1116,6 @@ class SAAMFRAM(object):
         """ sequence 1"""
         fragtagmsg = fragtagmsg + self.getReceivedString('[' + self.getCharForIndex(0), self.tx_rig, self.tx_channel)
     elif(x == mid_count):
-      #self.debug.info_message("fragtagmsg LOC 3d\n")
       if(repeat_mid >= 2):
         fragtagmsg = fragtagmsg + self.getReceivedString('[' + self.getCharForIndex(1), self.tx_rig, self.tx_channel)
       elif(repeat_mid >= 1):
@@ -1138,21 +1123,17 @@ class SAAMFRAM(object):
       elif(repeat_mid >= 3):
         fragtagmsg = fragtagmsg + self.getReceivedString('[' + self.getCharForIndex(2), self.tx_rig, self.tx_channel)
     elif(x == end_count):
-      #self.debug.info_message("fragtagmsg LOC 3c\n")
       if(repeat_thirds >=3 or repeat_mid >= 3):
         """ sequence 3,2,1"""
-        #self.debug.info_message("fragtagmsg LOC 3c 1\n")
         fragtagmsg = fragtagmsg + self.getReceivedString('[' + self.getCharForIndex(2), self.tx_rig, self.tx_channel)
         fragtagmsg = fragtagmsg + self.getReceivedString('[' + self.getCharForIndex(1), self.tx_rig, self.tx_channel)
         fragtagmsg = fragtagmsg + self.getReceivedString('[' + self.getCharForIndex(0), self.tx_rig, self.tx_channel)
       elif(repeat_thirds >=2 or repeat_mid >= 2):
         """ sequence 2,1"""
-        #self.debug.info_message("fragtagmsg LOC 3c 2\n")
         fragtagmsg = fragtagmsg + self.getReceivedString('[' + self.getCharForIndex(1), self.tx_rig, self.tx_channel)
         fragtagmsg = fragtagmsg + self.getReceivedString('[' + self.getCharForIndex(0), self.tx_rig, self.tx_channel)
       elif(repeat_thirds >=1 or repeat_mid >= 1):
         """ sequence 1"""
-        #self.debug.info_message("fragtagmsg LOC 3c 3\n")
         fragtagmsg = fragtagmsg + self.getReceivedString('[' + self.getCharForIndex(0), self.tx_rig, self.tx_channel)
 
     return fragtagmsg
@@ -1175,34 +1156,23 @@ class SAAMFRAM(object):
 
     repeat_thirds, third_count, two_third_count, repeat_mid, mid_count, end_count = self.calcRepeatFragSpecifics(repeat_mode, text, frag_string, fragsize, num_times_repeat)
 
-    #self.debug.info_message("fragtagmsg LOC 2\n")
-
     self.resetReceivedStrings(self.tx_rig, self.tx_channel)
     for x in range(len(frag_string)):
       start_frame = '[' + self.getCharForIndex(x) 
       part_string = start_frame + frag_string[x] 
 
-      #self.debug.info_message("fragtagmsg LOC 3\n")
-
       if(repeat_mode == cn.REPEAT_FRAGMENTS):
         fragtagmsg = fragtagmsg + self.doRepeatFrag(x, repeat_thirds, third_count, two_third_count, repeat_mid, mid_count, end_count)
 
-      #self.debug.info_message("fragtagmsg LOC 4\n")
-
       fragtagmsg = fragtagmsg + part_string
       self.addReceivedString(start_frame, part_string , self.tx_rig, self.tx_channel)
-
-    #self.debug.info_message("fragtagmsg LOC 5\n")
-    
+   
     """ checksum the entire message to make sure all fragments are authentic"""  
     check = self.getEOMChecksum(fragtagmsg)
 
     self.debug.info_message("EOM checksum is: " + str(check) )
 
-    #fragtagmsg = fragtagmsg + '[' + self.getCharForIndex(len(frag_string) ) + check + self.getEomMarker() # + ' ' + sender_callsign + ' '
     fragtagmsg = fragtagmsg + '[' + self.getCharForIndex(len(frag_string) ) + check + self.getEomMarker()  + ' ' + sender_callsign + ' '
-
-    #self.debug.info_message("fragtagmsg LOC 6\n")
 
     self.debug.info_message("fragtagmsg: " + fragtagmsg )
 
@@ -1493,7 +1463,7 @@ outbox dictionary items formatted as...
     return send_string
 
 
-  def mergeTags(existing_tags, tags):
+  def mergeTags(self, existing_tags, tags):
 
     num_fragments = -1
     for key in existing_tags:
@@ -1513,23 +1483,28 @@ outbox dictionary items formatted as...
         timestamp = datetime.utcnow().strftime('%y%m%d%H%M%S')
         self.debug.info_message("creating stub in dictionary and inbox\n")
 
-        #FIXME AM I IN THE RECEIVE LIST OR NOT?
-
         mycall = self.getMyCall()
 
-        if(self.testAnywhereOnReceiveList(stub, mycall) == True):
-          self.form_dictionary.createInboxDictionaryItem(msgid, rcv_list, msgfrom, '-', '-', timestamp, '-', tags)
-          self.group_arq.addMessageToInbox(msgfrom, rcv_list, '-', timestamp, '-', '-', 'Partial', msgid)
+        self.debug.info_message("processIncomingStubMessage stub is: " + stub)
+        self.debug.info_message("processIncomingStubMessage msgid is: " + msgid)
+        self.debug.info_message("processIncomingStubMessage rcv_list is: " + rcv_list)
+
+        which_box = cn.NO_BOX
+
+        if(self.testAnywhereOnReceiveList(rcv_list, mycall) == True):
+          which_box = cn.IN_BOX
+          self.form_dictionary.createInboxDictionaryItem(msgid, rcv_list, msgfrom, '-', '-', timestamp, '-', tags, 'Partial')
           self.form_gui.window['table_inbox_messages'].update(values=self.group_arq.getMessageInbox() )
           self.form_gui.window['table_inbox_messages'].update(row_colors=self.group_arq.getMessageInboxColors())
         else:
-          self.form_dictionary.createRelayboxDictionaryItem(msgid, rcv_list, msgfrom, '-', '-', timestamp, '-', tags, '', '')
-          self.group_arq.addMessageToRelaybox(msgfrom, rcv_list, '-', timestamp, '-', '-', msgid, 'Partial', '20')
+          which_box = cn.RELAY_BOX
+          #self.form_dictionary.createRelayboxDictionaryItem(msgid, rcv_list, msgfrom, '-', '-', timestamp, '-', tags, '', '', 'Partial')
+          self.form_dictionary.createRelayboxDictionaryItem(msgid, rcv_list, msgfrom, '-', '-', timestamp, '-', '', '', tags, 'Partial')
           self.form_gui.window['table_relay_messages'].update(values=self.group_arq.getMessageRelaybox() )
           self.form_gui.window['table_relay_messages'].update(row_colors=self.group_arq.getMessageRelayboxColors())
 
-        #FIXME TEST
-        if(self.doesInboxDictionaryItemExist(msgid)):
+        #FIXME PROCESS FOR RELAYBOX AND INBOX
+        if(self.form_dictionary.doesInboxDictionaryItemExist(msgid)):
           if(self.form_dictionary.getVerifiedFromInboxDictionary(msgid) == 'Partial'):
             existing_tags = self.form_dictionary.getContentFromInboxDictionary(msgid)
             received_strings, num_strings = self.mergeTags(existing_tags, tags)
@@ -1540,7 +1515,7 @@ outbox dictionary items formatted as...
                 rebuilt_string = rebuilt_string + extracted_string
               self.debug.info_message("rebuilt string is: " + rebuilt_string )
               self.debug.info_message("ALL PARTIAL TAGS NOW RECEIVIED SENDING TO PROCESS\n")
-              self.processIncomingMessage(rebuilt_string)
+              self.processIncomingMessageCommon(rebuilt_string, which_box)
           
 
     except:
@@ -1548,9 +1523,12 @@ outbox dictionary items formatted as...
 
     return
 
-
   def processIncomingMessage(self, received_text):
     self.debug.info_message("processIncomingMessage. Received text: " + received_text )
+    return self.processIncomingMessageCommon(received_text, cn.UNKNOWN_BOX)
+
+  def processIncomingMessageCommon(self, received_text, which_box):
+    self.debug.info_message("processIncomingMessageCommon. Received text: " + received_text )
 
     reconstruct = ''
 
@@ -1617,7 +1595,7 @@ outbox dictionary items formatted as...
         msgfrom   = self.getDecodeCallsignFromUniqueId(ID)
 
         #FIXME VERIFIED NEEDS TO REFLECT VERIFIED ONLY IF PASES CRC CHECK
-        verified  = 'yes'
+        verified  = 'Verified'
 
         #if(success):
         #  verified  = 'Verified'
@@ -1632,8 +1610,19 @@ outbox dictionary items formatted as...
           content.append(data[x])			
           self.debug.info_message("CONTENT is: " + data[x] )
 
-        self.form_dictionary. createInboxDictionaryItem(ID, msgto, msgfrom, subject, priority, timestamp, formname, content)
-        self.group_arq.addMessageToInbox(msgfrom, msgto, subject, timestamp, priority, formname, verified, ID)
+        if(which_box == cn.UNKNOWN_BOX):
+          if(self.testAnywhereOnReceiveList(msgto, self.getMyCall()) == True):
+            which_box = cn.IN_BOX
+          else:
+            which_box = cn.RELAY_BOX
+
+        if(which_box == cn.IN_BOX):
+          self.debug.info_message("processIncomingMessageCommon adding to INBOX")
+          self.form_dictionary.createInboxDictionaryItem(ID, msgto, msgfrom, subject, priority, timestamp, formname, content, verified)
+        elif(which_box == cn.RELAY_BOX):
+          self.debug.info_message("processIncomingMessageCommon adding to RELAYBOX")
+          confrcvd = ''
+          self.form_dictionary.createRelayboxDictionaryItem(ID, msgto, msgfrom, subject, priority, timestamp, formname, confrcvd, fragsize, content, verified)
 
       else:
         completed = True		  
@@ -1693,7 +1682,7 @@ outbox dictionary items formatted as...
       msgid, receive_list = self.extractFromStub(stub)
       split_string = receive_list.split(';')
 
-      if(mycall == split_string[0]):
+      if(mycall == split_string[0] ):
         self.debug.info_message("YES MY CALL IS FIRST ON THE LIST\n")
         return True
 
@@ -1706,21 +1695,20 @@ outbox dictionary items formatted as...
 
 
 
-  def testAnywhereOnReceiveList(self, stub, mycall):
+  def testAnywhereOnReceiveList(self, receive_list, mycall):
     try:
-      msgid, receive_list = self.extractFromStub(stub)
       split_string = receive_list.split(';')
 
       for x in range (0, len(split_string)):
-        if(mycall == split_string[x]):
-          self.debug.info_message("YES MY CALL IS FIRST ON THE LIST\n")
+        if(mycall == split_string[x].upper() ):
+          self.debug.info_message("YES MY CALL IS SOMEWHERE ON THE LIST\n")
           return True
 
     except:
       self.debug.error_message("Exception in testAnywhereOnReceiveList: " + str(sys.exc_info()[0]) + str(sys.exc_info()[1] ))
       return False
 
-    self.debug.info_message("NO MY CALL IS NOT FIRST ON THE LIST\n")
+    self.debug.info_message("NO MY CALL IS NOT ANYWHERE ON THE LIST\n")
     return False
 
 
@@ -1775,7 +1763,6 @@ outbox dictionary items formatted as...
             return '[F' + str(frame_number) + ',' + str(num_frames) + ']'
         except:
           self.debug.info_message("Exception in testForStartFrame: " + str(sys.exc_info()[0]) + str(sys.exc_info()[1] ))
-          #self.debug.info_message("EXCEPTION NOPE ITS NOT\n")
           if('[F' in receive_string):
             split_string = receive_string.split('[F', 1)
             if(']' in split_string[1]):
@@ -1784,8 +1771,6 @@ outbox dictionary items formatted as...
               self.discardErroneousText(split_string2[1])
 
           return ''			       
-
-    self.debug.info_message("NOPE ITS NOT\n")
 
     if('[F' in receive_string):
       split_string = receive_string.split('[F', 1)
@@ -1853,11 +1838,10 @@ outbox dictionary items formatted as...
 
     if(']' + self.getEomMarker() + ' ' + self.getSenderCall() in receive_string):
       split_string = receive_string.split(']' + self.getEomMarker() + ' ' + self.getSenderCall(), 1)
-      #self.debug.info_message("EOM TAG LOC 3\n")
       eom_tag  = split_string[0][-5:] + ']'
       split_string = receive_string.split(']' + self.getEomMarker() + ' ', 1)
       eom_call = split_string[1].split(' ')[0]
-      if(eom_tag[0] == '[' and eom_tag[5] == ']' and eom_call == self.getSenderCallsign(self.active_rig, self.active_channel)):
+      if(eom_tag[0] == '[' and eom_tag[5] == ']' and eom_call == self.getSenderCall() ):
         #self.debug.info_message("EOM TAG: " + eom_tag + ' ' + eom_call )
         return eom_tag
 
@@ -1870,12 +1854,10 @@ outbox dictionary items formatted as...
         split_string = receive_string.split('[', 1)[1]
         eom_text = split_string[5:7]
 
-        #FIXME
         sender_call_split = split_string.split(' ')
         if(len(sender_call_split) >= 2 and sender_call_split[1] == self.getSenderCall() and eom_text == self.getEomMarker()):
           self.debug.info_message("sender call is: " + sender_call_split[1])
 
-        #if(eom_text == self.getEomMarker()):
           frag_num = split_string[0]
           self.debug.info_message("YES WE HAVE AN EOM TAG\n")
           return '[' + frag_num 
@@ -1983,7 +1965,6 @@ outbox dictionary items formatted as...
     num_recipients = len(recipient_stations)
     self.debug.info_message("loc 1 current_recipient, num_recipients: " + str(current_recipient) + ',' + str(num_recipients)  )
 
-    #FIXME
     checked = self.form_gui.window['cb_outbox_includepremsg'].get()
     if(checked):
       self.setPreMessage('', '')
@@ -1994,13 +1975,11 @@ outbox dictionary items formatted as...
 
     if(current_recipient < num_recipients):
 
-      #FIXME
       mycall = self.getMyCall()
       mygroup = self.getMyGroup()
       msg_addressed_to = ' ' + mycall + ': ' + mygroup + ' '
       self.setMessage(self.tx_rig, self.tx_channel, msg_addressed_to + ' BOS ' + message)
 
-      #self.setMessage(self.tx_rig, self.tx_channel, message)
       self.setCommStatus(self.tx_rig, self.tx_channel, cn.COMM_QUEUED_TXMSG)
       self.setExpectedReply(self.tx_rig, self.tx_channel, cn.COMM_AWAIT_ACKNACK)
     else:
@@ -2025,23 +2004,16 @@ outbox dictionary items formatted as...
     message = pre_message + message
 
     """ send the full message to the group first """
-    #if(self.getSendToGroupIndividual(self.tx_rig, self.tx_channel) == cn.SENDTO_GROUP):
     mycall = self.getMyCall()
     mygroup = self.getMyGroup()
-    #msg_addressed_to = self.getSenderCallsign(self.tx_rig, self.tx_channel) + ': ' + self.form_gui.window['input_myinfo_group_name'].get() + ' '
     msg_addressed_to = ' ' + mycall + ': ' + mygroup + ' '
-    #elif(self.getSendToGroupIndividual(self.tx_rig, self.tx_channel) == cn.SENDTO_INDIVIDUAL):
-    #  recipient_stations = self.getRecipientStations(self.tx_rig, self.tx_channel)
-    #  send_to_call = recipient_stations[self.getCurrentRecipient(self.tx_rig, self.tx_channel)]
-    #  msg_addressed_to = self.form_gui.window['input_myinfo_callsign'].get() + ': ' + send_to_call + ' '
 
-    #self.setMessage(self.tx_rig, self.tx_channel, msg_addressed_to + message)
     self.setMessage(self.tx_rig, self.tx_channel, msg_addressed_to + ' BOS ' + message)
     self.setCurrentRecipient(self.tx_rig, self.tx_channel, 0)
 
-    #FIXME
     self.setTxidState(self.tx_rig, self.tx_channel, True)
     """ send the full message to the group first """
+
     #FIXME NOT NEEDED NOW!
     self.setSendToGroupIndividual(self.tx_rig, self.tx_channel, cn.SENDTO_GROUP)
 
@@ -2061,7 +2033,6 @@ outbox dictionary items formatted as...
     if(current_recipient < num_recipients):
       self.setCommStatus(self.tx_rig, self.tx_channel, cn.COMM_QUEUED_TXMSG)
       self.fldigiclient.sendItNowFldigi(msg_addressed_to + ' BOS ' + message)
-      #self.debug.info_message("SENDING LOC 6\n")
       self.setExpectedReply(self.tx_rig, self.tx_channel, cn.COMM_AWAIT_ACKNACK)
 
     else:
@@ -2175,45 +2146,98 @@ outbox dictionary items formatted as...
     return
 
 
-  """ 
-  format:
-  ACK <TOCALL> <FROMCALL>
-  """
-  def sendAck(self, from_callsign, to_callsign):
-    ack_message = to_callsign + cn.COMM_ACK_MSG + from_callsign + ' '
+
+  def sendCommon(self, command, msgid):
+    from_callsign = self.getMyCall()
+    to_callsign   = self.getSenderCall()
+
+    if(msgid == None):
+      message = ' ' + from_callsign + ': ' + to_callsign + command + ' ' + from_callsign + ' '
+    else:
+      message = ' ' + from_callsign + ': ' + to_callsign + command + ' ' + msgid + ' ' + from_callsign + ' '
+
     self.setCommStatus(self.tx_rig, self.tx_channel, cn.COMM_QUEUED_TXMSG)
-    self.setExpectedReply(self.tx_rig, self.tx_channel, cn.COMM_NONE)
-    self.group_arq.sendItNowRig1(ack_message)
+    self.setExpectedReply(self.tx_rig, self.tx_channel, cn.COMM_LISTEN)
+    self.group_arq.sendItNowRig1(message)
     return
 
+  def sendSaamQrt(self):
+    self.sendCommon(cn.COMM_SAAMQRT_MSG, None)
 
-  def sendNack(self, frames, from_callsign, to_callsign):
+  def sendConf(self):
+    self.sendCommon(cn.COMM_CONF_MSG, None)
 
-    #FIXME
+  def sendQryReady(self):
+    self.sendCommon(cn.COMM_QRYRDY_MSG, None)
+
+  def sendReadyToReceive(self):
+    self.sendCommon(cn.COMM_RR_MSG, None)
+
+  def sendNotReady(self):
+    self.sendCommon(cn.COMM_NR_MSG, None)
+
+  def sendCancelHaveCopy(self):
+    self.sendCommon(cn.COMM_CCL_MSG, None)
+
+
+  def toSendOrNotToSend(self):
     sendit = False
+
+    """ if the field is empty then do not reply back we are listening only"""
+    if(self.getSenderCall() == ''):
+      return False
+
     if( self.getWhatWhere(self.active_rig, self.active_channel) == cn.FRAGMENTS_TO_GROUP):
+      self.debug.info_message("toSendOrNotToSend addressed to GROUP")
       """ now check the stub to see if I am the first callsign in the list"""
+
       #FIXME remove the following line as already processed....
       stub = self.decodeAndSaveStub()
       mycall = self.getMyCall() 
       if(stub != '' and self.testFirstOnReceiveList(stub, mycall)==True):
         sendit = True
-    elif( self.getWhatWhere(self.active_rig, self.active_channel) == cn.FRAGMENTS_TO_ME):
+        self.debug.info_message("toSendOrNotToSend. I am first on receive list")
+
+    elif( self.getWhatWhere(self.active_rig, self.active_channel) == cn.QRYACKNACK_TO_ME):
       sendit = True
+      self.debug.info_message("toSendOrNotToSend. QRYACKNACK addressed to me")
 
-    self.debug.info_message("SEND IT IS: " + str(sendit) )
+    self.debug.info_message("toSendOrNotToSend sendit is: " + str(sendit) )
+    return sendit
 
-    frames = self.getRunLengthEncodeNackFldigi(frames)
+  """ 
+  format:
+  ACK <TOCALL> <FROMCALL>
+  """
+  def sendAck(self, from_callsign, to_callsign):
 
-    nack_message = to_callsign + cn.COMM_NACK_MSG + '(' + frames + ') ' + from_callsign + ' '
-    self.setCommStatus(self.tx_rig, self.tx_channel, cn.COMM_QUEUED_TXMSG)
-    self.setExpectedReply(self.tx_rig, self.tx_channel, cn.COMM_AWAIT_RESEND)
-    self.group_arq.sendItNowRig1(nack_message)
+    sendit = self.toSendOrNotToSend()
+    if(sendit == False):
+      self.setCommStatus(self.tx_rig, self.tx_channel, cn.COMM_LISTEN)
+    else:
+      ack_message = to_callsign + cn.COMM_ACK_MSG + from_callsign + ' '
+      self.setCommStatus(self.tx_rig, self.tx_channel, cn.COMM_QUEUED_TXMSG)
+      self.setExpectedReply(self.tx_rig, self.tx_channel, cn.COMM_NONE)
+      self.group_arq.sendItNowRig1(ack_message)
+
+    return
+
+
+  def sendNack(self, frames, from_callsign, to_callsign):
+
+    sendit = self.toSendOrNotToSend()
+    if(sendit == False):
+      self.setCommStatus(self.tx_rig, self.tx_channel, cn.COMM_LISTEN)
+    else:
+      frames = self.getRunLengthEncodeNackFldigi(frames)
+      nack_message = to_callsign + cn.COMM_NACK_MSG + '(' + frames + ') ' + from_callsign + ' '
+      self.setCommStatus(self.tx_rig, self.tx_channel, cn.COMM_QUEUED_TXMSG)
+      self.setExpectedReply(self.tx_rig, self.tx_channel, cn.COMM_AWAIT_RESEND)
+      self.group_arq.sendItNowRig1(nack_message)
     return
 
   def sendAckJS8(self, from_callsign, to_callsign):
     ack_message = to_callsign + cn.COMM_ACK_MSG + from_callsign + ' '
-    #ack_message = cn.COMM_ACK_MSG + to_callsign + ' ' + from_callsign + ' '
 
     comm_status = self.getCommStatus(self.tx_rig, self.tx_channel)
     if(comm_status == cn.COMM_RECEIVING):
@@ -2229,9 +2253,7 @@ outbox dictionary items formatted as...
     return
 
   def sendNackJS8(self, frames, num_fragments, from_callsign, to_callsign):
-    #nack_message = to_callsign + cn.COMM_NACK_MSG + '(' + frames + ') ' + from_callsign + ' '
     nack_message = to_callsign + cn.COMM_NACK_MSG + self.createNackCodeJS8(frames, num_fragments) + cn.EOM_JS8 + ' ' + from_callsign + ' '
-    #nack_message = cn.COMM_NACK_MSG + self.createNackCodeJS8(frames, num_fragments) + cn.EOM_JS8
 
     comm_status = self.getCommStatus(self.tx_rig, self.tx_channel)
     if(comm_status == cn.COMM_RECEIVING):
@@ -2277,14 +2299,16 @@ outbox dictionary items formatted as...
 
     recipient_stations = self.getRecipientStations(self.tx_rig, self.tx_channel)
     to_callsign = recipient_stations[self.getCurrentRecipient(self.tx_rig, self.tx_channel)]
-    from_callsign = self.getSenderCallsign(self.tx_rig, self.tx_channel)
 
     self.setTxidState(self.tx_rig, self.tx_channel, False)
 
     self.setCommStatus(self.tx_rig, self.tx_channel, cn.COMM_QUEUED_TXMSG)
     self.setExpectedReply(self.tx_rig, self.tx_channel, cn.COMM_AWAIT_ACKNACK)
     """ add an extra space on the end making a total of two spaces following the ?"""
-    self.group_arq.sendItNowRig1(to_callsign + cn.COMM_QRYACK_MSG + from_callsign + ' '  )
+    if(self.tx_mode == 'FLDIGI'):
+      self.group_arq.sendItNowRig1('      ' + to_callsign + cn.COMM_QRYACK_MSG + from_callsign + ' '  )
+    else:
+      self.group_arq.sendItNowRig1(to_callsign + cn.COMM_QRYACK_MSG + from_callsign + ' '  )
     return 
 
   def resendFrames(self, frames, from_callsign, to_callsign):
@@ -2330,7 +2354,6 @@ outbox dictionary items formatted as...
     self.debug.info_message("RESEND FRAMES 4\n")
     self.debug.info_message("resend string: " + str(resend_string) )
 
-    #self.setMessage(self.tx_rig, self.tx_channel, resend_string + cn.EOM_JS8)
     self.setMessage(self.tx_rig, self.tx_channel, resend_string + cn.EOM_JS8 + ' ' + from_callsign + ' ')
     self.setCommStatus(self.tx_rig, self.tx_channel, cn.COMM_QUEUED_TXMSG)
     self.setExpectedReply(self.tx_rig, self.tx_channel, cn.COMM_AWAIT_ACKNACK)
@@ -2373,7 +2396,6 @@ outbox dictionary items formatted as...
     receive_string = self.group_arq.getReceiveStringRig1()  
     tx_strings = self.getReceivedStrings(self.tx_rig, self.tx_channel)
 
-    #FIXME
     self.setTxidState(self.tx_rig, self.tx_channel, False)
     """ send the full message to the group first """
     self.setSendToGroupIndividual(self.tx_rig, self.tx_channel, cn.SENDTO_INDIVIDUAL)
@@ -2401,27 +2423,18 @@ outbox dictionary items formatted as...
     self.debug.info_message("process nack JS8\n")
     receive_string = self.getAckNackCode(self.active_rig, self.active_channel).strip().split(cn.EOM_JS8, 1)[0]
     self.debug.info_message("received string is: " + str(receive_string) )
-    #self.debug.info_message("process nack JS8 LOC 1\n")
     tx_strings = self.getReceivedStrings(self.tx_rig, self.tx_channel)
-    #self.debug.info_message("process nack JS8 LOC 1a\n")
     split_string = receive_string.split((cn.COMM_NACK_MSG).strip() + ' ', 1)
-    #self.debug.info_message("process nack JS8 LOC 1b\n")
     nack_code = split_string[1]
-    #self.debug.info_message("process nack JS8 LOC 1c\n")
     
     verified_missing_frames = ''
 
-    #self.debug.info_message("process nack JS8 LOC 2\n")
-
     if(nack_code[0]== '+'):
-      #self.debug.info_message("process nack JS8 LOC 3\n")
       verified_missing_frames = self.decodeNackCodeReceivedJS8(nack_code, rig)
     elif(nack_code[0]== '-'):
-      #self.debug.info_message("process nack JS8 LOC 4\n")
       verified_missing_frames = self.decodeNackCodeMissingJS8(nack_code, rig)
 
     self.resendFramesJS8(verified_missing_frames, from_callsign, to_callsign)
-    #self.debug.info_message("process nack JS8 LOC 5\n")
     self.debug.info_message("verified missing frames :" + verified_missing_frames )
     return verified_missing_frames
 
@@ -2502,71 +2515,9 @@ outbox dictionary items formatted as...
        
     return
 
-  #NOT USED ??????!!!!!!!!!!!!
-  """
-  def getFramesMissingSender(self, callsign, ID, num_frames):
-
-    missing_frames = ''
-    frames_confirmed = ''
-    key = callsign + '_' + ID
-    callsigns_confirmed = self.getCallsignsConfirmed(self.active_rig, self.active_channel)
-    if (key in callsigns_confirmed):
-      frames_confirmed = callsigns_confirmed[key]
-    for x in range(num_frames):
-      frame = 'F' + str(x)
-      if(frame not in frames_confrmed):
-        if(missing_frames == ''):		  
-          missing_frames = frame
-        else:  
-          missing_frames = missing_frames + ',' + frame
-    return missing_frames
-  """  
-
-  """
-  this is used by the receiving station to make a note of which frames came in correct for message with ID
-  """
-  #NOT USED ???????!!!!!!!!!!!
-
-  """
-  def addCorrectFrames(self, ID, frame):
-    
-    correct_frames = self.getCorrectFrames(self.active_rig, self.active_channel)
-    if (key in correct_frames):
-      correct_frames[ID] = frame
-    else:    
-      existing_frames = correct_frames[ID]
-      correct_frames[ID] = existing_frames + ',' + frame
-
-  """
-
-  #NOT USED ?????????????!!!!!!!!!!!!!!!
-
-  """
-  def getFramesMissingReceiver(self, ID, num_frames):
-    self.debug.info_message("FRAMES MISSING RECEIVER LOC 1\n")
-
-    missing_frames = ''
-    frames_confirmed = ''
-    self.debug.info_message("FRAMES MISSING RECEIVER LOC 2\n")
-    correct_frames = self.getCorrectFrames(self.active_rig, self.active_channel)
-    if (ID in correct_frames):
-      frames_confirmed = correct_frames[ID]
-    self.debug.info_message("FRAMES MISSING RECEIVER LOC 3\n")
-    for x in range(num_frames):
-      frame = 'F' + str(x)
-      self.debug.info_message("FRAMES MISSING RECEIVER LOC 4\n")
-      if(frame + ',' not in frames_confirmed + ','):
-        if(missing_frames == ''):		  
-          missing_frames = frame
-        else:  
-          missing_frames = missing_frames + ',' + frame
-    self.debug.info_message("FRAMES MISSING RECEIVER LOC 5\n")
-    return missing_frames
-  """
-
 
   def getSetCallsignJS8(self, dict_obj, text, rigname, channel_name):
-    # NEED TO FIGURE OUT CALLSIGN FROM RANSMIT CHARS AS CALL ONLY PRESENT ON RX.DIRECTED?????
+    # NEED TO FIGURE OUT CALLSIGN FROM TRANSMIT CHARS AS CALL ONLY PRESENT ON RX.DIRECTED?????
 
     callsign = self.getChannelCallsign(rigname, channel_name)
     if(callsign == '' or callsign == None or callsign == 'None'):
@@ -2759,13 +2710,9 @@ outbox dictionary items formatted as...
 
   def js8_process_rcv(self): 
 
-    #self.debug.info_message("JS8 PROCESS RCV\n")
-   
     rcv_string = self.getRcvString(self.active_rig, self.active_channel)
 
-    #TEST
     command, remainder, from_call, param_1 = self.saam_parser.testAndDecodeCommands(rcv_string, cn.JS8CALL)
-    #command, remainder = self.saam_parser.testAndDecodeCommands(rcv_string, cn.JS8CALL)
     if(command != cn.COMMAND_NONE):
       self.debug.info_message("process the commands in here\n")
       self.setRcvString(self.active_rig, self.active_channel, remainder)
@@ -2862,12 +2809,14 @@ outbox dictionary items formatted as...
       self.setCurrentRecipient(self.tx_rig, self.tx_channel, current_recipient + 1)
       self.debug.info_message("advancing to next station" + str(current_recipient+1) )
 
+      #FIXME TEST
+      #to_call = recipient_stations[int(current_recipient)+1]  
+      #self.form_gui.window['in_inbox_listentostation'].update(to_call)
+
       if(current_recipient+1 < num_recipients):
         self.setPreMessage(recipient_stations[current_recipient+1], self.groupname)
         self.requestConfirm(self.getMyCall(), self.getSenderCall())
       else:
-        #self.setCommStatus(self.tx_rig, self.tx_channel, cn.COMM_LISTEN)
-
         #FIXME SEND THE EOS MESSAGE
         from_callsign = self.getMyCall()
         to_callsign = self.getMyGroup()
@@ -2877,8 +2826,6 @@ outbox dictionary items formatted as...
 
     else:
       """ abort station retransmits and move onto the next station """
-      #self.setCommStatus(self.tx_rig, self.tx_channel, cn.COMM_LISTEN)
-
       #FIXME SEND THE EOS MESSAGE
       from_callsign = self.getMyCall()
       to_callsign = self.getMyGroup()
@@ -2906,7 +2853,6 @@ outbox dictionary items formatted as...
       self.fldigiclient.setTxidState(self.getTxidState(self.tx_rig, self.tx_channel))
 
       self.fldigiclient.sendItNowFldigiThread(self.fldigiclient.send_string)
-      #self.debug.info_message("SENDING LOC 11\n")
       expected_reply = self.getExpectedReply(self.tx_rig, self.tx_channel)
       self.setCommStatus(self.tx_rig, self.tx_channel, expected_reply)
       self.debug.info_message("comm status queued txmsg\n")
@@ -2947,7 +2893,9 @@ outbox dictionary items formatted as...
         """ abort acknack query"""
         self.advanceToNextRecipient()
 
-      self.debug.info_message("comm status await acknack\n")
+      if(self.last_displayed_debug_message != 'comm status await acknack'):
+        self.last_displayed_debug_message = 'comm status await acknack'
+        self.debug.info_message(self.last_displayed_debug_message)
 
   def testForAckNack(self, fldigi_instance):
 
@@ -2968,8 +2916,7 @@ outbox dictionary items formatted as...
 
         recipient_stations = self.getRecipientStations(self.tx_rig, self.tx_channel)
         current_recipient  = self.getCurrentRecipient(self.tx_rig, self.tx_channel)
-        to_callsign = recipient_stations[int(current_recipient)]  #self.getSenderCall() #????? current recipient????
-        #to_callsign =self.getSenderCall()
+        to_callsign = recipient_stations[int(current_recipient)]  
 
         retransmit_count = self.getRetransmitCount(self.tx_rig, self.tx_channel)
         self.debug.info_message("retransmit count is : " + str(retransmit_count) )
@@ -3010,7 +2957,6 @@ outbox dictionary items formatted as...
     rcv_string = self.getRcvString(self.active_rig, self.active_channel)
     if(True):
 
-      #FIXME
       sender_call = ''
       if(cn.EOM_JS8 in rcv_string):
         split_string = rcv_string.split(cn.EOM_JS8 + ' ', 1)[1]
@@ -3020,7 +2966,6 @@ outbox dictionary items formatted as...
           self.debug.info_message("sender call is: " + sender_call)
       if(cn.COMM_NACK_MSG in rcv_string and sender_call == self.getSenderCall() ):
 
-      #if(cn.COMM_NACK_MSG in rcv_string):
         self.debug.info_message("NACK \n")
         from_callsign = self.getMyCall()
         to_callsign = self.getSenderCall()
@@ -3045,13 +2990,13 @@ outbox dictionary items formatted as...
         self.processAckJS8(self.active_rig, self.active_channel)
 
   def getSentToMe(self):
-    return self.getSenderCall() + ': ' + self.getMyCall()
+    return self.getMyCall() + ' '
 
   def getSentToMeAlt(self):
-    return ' ' + self.getMyCall() + ' '
+    return self.getMyCall() + ' '
 
   def getSentToGroup(self):
-    return self.getSenderCall() + ': ' + self.getMyGroup()
+    return ' ' + self.getMyGroup() + ' ' 
 
   """
   callback function used by JS8_Client processing thread
@@ -3061,7 +3006,7 @@ outbox dictionary items formatted as...
     rcv_string = self.fldigiclient.getReceiveString()
     start_frame_tag = self.testForStartFrame(self.fldigiclient.getReceiveString())
   
-    command, remainder, from_call, param_1 = self.saam_parser.testAndDecodeCommands(rcv_string, cn.FLDIGI)
+    command, remainder, from_call, param_1 = self.saam_parser.testAndDecodeCommands(self.fldigiclient.getLastTwenty(), cn.FLDIGI)
     if(command != cn.COMMAND_NONE):
       self.debug.info_message("process the commands in here\n")
       self.fldigiclient.setReceiveString(remainder)
@@ -3073,10 +3018,6 @@ outbox dictionary items formatted as...
           self.debug.info_message("heard query saam\n")
           group_name = param_1
           self.form_gui.form_events.changeFlashButtonState('btn_compose_saam', True)
-          #self.group_arq.addSelectedStation(from_call, 'X')
-          #table = self.group_arq.getSelectedStations()
-          #self.form_gui.window['tbl_compose_selectedstations'].update(values=table )
-          #self.form_gui.window['in_inbox_listentostation'].update(from_call)
 
         if(command == cn.COMMAND_SAAM):
           """ Do not send an automatic reply as all stations potentially use the same channel in fldigi"""
@@ -3086,7 +3027,8 @@ outbox dictionary items formatted as...
           self.group_arq.addSelectedStation(from_call, 'X')
           table = self.group_arq.getSelectedStations()
           self.form_gui.window['tbl_compose_selectedstations'].update(values=table )
-          self.form_gui.window['in_inbox_listentostation'].update(from_call)
+          if(self.group_arq.formdesigner_mode == False ):
+            self.form_gui.window['in_inbox_listentostation'].update(from_call)
 
         elif(command == cn.COMMAND_REQM):
           self.debug.info_message("Received REQM\n")
@@ -3150,15 +3092,17 @@ outbox dictionary items formatted as...
         self.debug.info_message("LAST TWWENTY IS: " + fldigi_instance.last_twenty_chars )
 
         if( fldigi_instance.testLastTwenty(self.getSentToGroup()) ):
-          self.debug.info_message("ADDRESSED TO HINET GROUP\n")
+          self.debug.info_message("ADDRESSED TO GROUP")
           fldigi_instance.resetLastTwenty()
           """ this is relevant for the active channel and the tx channel"""
           self.setWhatWhere(self.active_rig, self.active_channel, cn.FRAGMENTS_TO_GROUP)
-        if( fldigi_instance.testLastTwenty(self.getSentToMe()) ):
-          self.debug.info_message("ADDRESSED TO WH6ABC\n")
+        elif( fldigi_instance.testLastTwenty(self.getSentToMe()) ):
+          self.debug.info_message("ADDRESSED TO ME")
           fldigi_instance.resetLastTwenty()
           """ this is relevant for the active channel and the tx channel"""
           self.setWhatWhere(self.active_rig, self.active_channel, cn.FRAGMENTS_TO_ME)
+        else:
+          self.setWhatWhere(self.active_rig, self.active_channel, cn.WHAT_WHERE_NONE)
 
       self.setCommStatus(self.tx_rig, self.tx_channel, cn.COMM_RECEIVING)
       start_frame_tag = self.gotStartFrame(start_frame_tag)
@@ -3167,14 +3111,29 @@ outbox dictionary items formatted as...
       self.debug.info_message("calling message ended\n")
       self.messageEnded()
 
+    elif(fldigi_instance.testReceiveString(self.getSenderCall() + ': ' + self.getMyGroup() + '  ' + self.getBosMarker() ) == True):
+      self.setWhatWhere(self.active_rig, self.active_channel, cn.FRAGMENTS_TO_GROUP)
+      self.debug.info_message("message addressed to group")
+
+    elif(fldigi_instance.testReceiveString(self.getMyGroup() + ' ' + self.getEosMarker() + ' ' ) == True and self.fldigiclient.testRcvSignalStopped() == True):
+      self.debug.info_message("session ended 1")
+      self.resetReceivedStrings(self.active_rig, self.active_channel)
+      self.fldigiclient.resetReceiveString()
+    elif(fldigi_instance.testReceiveString(' ' + self.getEosMarker() + ' ' + self.getSenderCall() ) == True and self.fldigiclient.testRcvSignalStopped() == True):
+      self.debug.info_message("session ended 2")
+      self.resetReceivedStrings(self.active_rig, self.active_channel)
+      self.fldigiclient.resetReceiveString()
+
     elif(fldigi_instance.testReceiveString(cn.COMM_QRYACK_MSG) == True and self.fldigiclient.testRcvSignalStopped() == True):
       self.debug.info_message("proc for ack?\n")
 
       if( fldigi_instance.testLastTwenty(self.getSentToMeAlt()) ):
-        self.debug.info_message("ADDRESSED TO WH6ABC\n")
+        self.debug.info_message("ADDRESSED TO ME")
         fldigi_instance.resetLastTwenty()
         """ this is relevant for the active channel and the tx channel"""
         self.setWhatWhere(self.active_rig, self.active_channel, cn.QRYACKNACK_TO_ME)
+      else:
+        self.setWhatWhere(self.active_rig, self.active_channel, cn.WHAT_WHERE_NONE)
 
       received_strings = self.getReceivedStrings(self.active_rig, self.active_channel)
       num_strings = self.getNumFragments(self.active_rig, self.active_channel) 
@@ -3195,7 +3154,6 @@ outbox dictionary items formatted as...
         from_callsign = self.getMyCall()
         to_callsign = self.getSenderCall()
         self.sendAck(from_callsign, to_callsign)
-        #self.debug.info_message("SENDING ACK LOC 1\n")
 
       else:  
         self.fldigiclient.resetReceiveString()
@@ -3208,7 +3166,6 @@ outbox dictionary items formatted as...
         self.form_gui.window['table_inbox_messages'].update(row_colors=self.group_arq.getMessageInboxColors())
 
         self.sendNack(missing_frames, from_callsign, to_callsign)
-        #self.debug.info_message("SENDING NACK LOC 2\n")
 
     elif( self.getInSession(self.active_rig, self.active_channel) == True and self.fldigiclient.testRcvSignalStopped() == True and self.getCommStatus(self.tx_rig, self.tx_channel) == cn.COMM_RECEIVING):
       self.debug.info_message("calling message ended rcv signal stopped\n")
@@ -3256,13 +3213,9 @@ outbox dictionary items formatted as...
             self.form_gui.window['table_inbox_messages'].update(row_colors=self.group_arq.getMessageInboxColors())
             self.fldigiclient.resetReceiveString()
 
-            #FIXME NO NEED TO RESET HERE
-            self.resetReceivedStrings(self.active_rig, self.active_channel)
-
             from_callsign = self.getMyCall()
             to_callsign = self.getSenderCall()
             self.sendAck(from_callsign, to_callsign)
-            #self.debug.info_message("SENDING ACK LOC 3\n")
 
         else:
           success = False	
@@ -3270,8 +3223,6 @@ outbox dictionary items formatted as...
         start_frame_tag = self.testForStartFrame(self.fldigiclient.getReceiveString())
 
         rcv_string = self.fldigiclient.getReceiveString()
-
-        #self.debug.info_message("FLDIGI LOC 10\n")
 
         self.debug.info_message("testing frame: " + rcv_string )
 
@@ -3308,7 +3259,7 @@ outbox dictionary items formatted as...
         rcv_string = self.getRcvString(self.active_rig, self.active_channel)
         self.debug.info_message("processing end frame: " + rcv_string )
 
-        if(True): #self.validateFrame(extracted_frame_contents, end_frame_tag.split('[', 1)[1].split(']', 1)[0]) == True):
+        if(True): 
 
           self.addReceivedString(start_frame_tag, start_frame_tag + extracted_frame_contents, self.active_rig, self.active_channel)
           #FIXME NOT SURE IF NEEDED
@@ -3383,13 +3334,9 @@ outbox dictionary items formatted as...
         self.form_gui.window['table_inbox_messages'].update(row_colors=self.group_arq.getMessageInboxColors())
         self.fldigiclient.resetReceiveString()
 
-        #NO NEED TO RESET RECEIVED STRINGS HERE
-        self.resetReceivedStrings(self.active_rig, self.active_channel)
-
         from_callsign = self.getMyCall()
         to_callsign = self.getSenderCall()
         self.sendAck(from_callsign, to_callsign)
-        #self.debug.info_message("SENDING ACK LOC 4\n")
       else:  
         self.fldigiclient.resetReceiveString()
         from_callsign = self.getMyCall()
@@ -3403,7 +3350,6 @@ outbox dictionary items formatted as...
         self.form_gui.window['table_inbox_messages'].update(row_colors=self.group_arq.getMessageInboxColors())
 
         self.sendNack(missing_frames, from_callsign, to_callsign)
-        #self.debug.info_message("SENDING NACK LOC 5\n")
 
     except:
       self.debug.error_message("Exception in messageEnded: " + str(sys.exc_info()[0]) + str(sys.exc_info()[1] ))
@@ -3502,7 +3448,9 @@ outbox dictionary items formatted as...
         diff = (datetime.now() - last_frame_rcv_time)
 
       elif(comm_status == cn.COMM_AWAIT_ACKNACK):
-        self.debug.info_message("comm status await acknack\n")
+        if(self.last_displayed_debug_message != 'comm status await acknack'):
+          self.last_displayed_debug_message = 'comm status await acknack'
+          self.debug.info_message(self.last_displayed_debug_message)
 
       if(self.getQryAcknackRetransmitCount(self.active_rig, self.active_channel) < self.max_qry_acknack_retransmits):
         self.listenForAckNackJS8()
