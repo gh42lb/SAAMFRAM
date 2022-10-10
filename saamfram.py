@@ -104,22 +104,28 @@ class SAAMFRAM(object):
 
   def getSenderCall(self):
     if(self.form_gui.window != None and self.form_gui.form_events.window_initialized == True and self.group_arq.formdesigner_mode == False):
-      return self.form_gui.window['in_inbox_listentostation'].get()
+      return self.form_gui.window['in_inbox_listentostation'].get().strip().upper()
     else:
       return '' 
 
   def getMyCall(self):
     if(self.form_gui.window != None and self.form_gui.form_events.window_initialized == True):
-      return self.form_gui.window['input_myinfo_callsign'].get()
+      return self.form_gui.window['input_myinfo_callsign'].get().strip().upper()
     else:
       return '' 
 
   def getMyGroup(self):
     if(self.form_gui.window != None and self.form_gui.form_events.window_initialized == True):
-      return self.form_gui.window['input_myinfo_group_name'].get()
+      return self.form_gui.window['input_myinfo_group_name'].get().strip().upper()
     else:
       return '' 
 
+  def inSession(self):
+    if(self.getInSession(self.tx_rig, self.tx_channel) == True or self.getInSession(self.active_rig, self.active_channel) == True):
+      return True
+    else: 
+      return False
+    #return self.getInSession(self.tx_rig, self.tx_channel)
 
   def switchToJS8Mode(self):
     self.group_arq.send_mode_rig1 = cn.SEND_JS8CALL
@@ -380,6 +386,49 @@ class SAAMFRAM(object):
 
     return message  
 
+
+  def getEncodeEscapes(self, message):
+
+    try:
+      """ process the forward slahs first"""
+      message = message.replace('/','//')
+
+      if (platform.system() == 'Windows'):
+        message = message.replace('\r\n','/N')
+        message = message.replace('\r','/N')
+        message = message.replace('\n','/N')
+      else:
+        message = message.replace('\r','/N')
+        message = message.replace('\n','/N')
+
+      message = message.replace('[','/A')
+      message = message.replace(']','/B')
+      message = message.replace('{','/C')
+      message = message.replace('}','/D')
+      #message = message.replace('~','/F')
+
+    except:
+      self.debug.error_message("Exception in getEncodeEscapes: " + str(sys.exc_info()[0]) + str(sys.exc_info()[1] ))
+
+    return message
+
+  def getDecodeEscapes(self, message):
+
+    #message = message.replace('/F', '~')
+    message = message.replace('/D', '}')
+    message = message.replace('/C', '{')
+    message = message.replace('/B', ']')
+    message = message.replace('/A', '[')
+
+    if (platform.system() == 'Windows'):
+      message = message.replace('/N', '\r\n')
+    else:
+      message = message.replace('/N', '\n')
+
+    """ process the forward slahs last"""
+    message = message.replace('//', '/')
+
+    return message
 
   def createAndSetRxRig(self, rig):
     self.debug.info_message("CREATE AND SET RX RIG\n")
@@ -1203,6 +1252,16 @@ class SAAMFRAM(object):
     repeat_mode = cn.REPEAT_NONE
     num_times_repeat = 3
 
+    if(self.form_gui.window['option_repeatmessagetimes'].get() == 'x1'):
+      repeat_mode = cn.REPEAT_MESSAGE
+      num_times_repeat = 1
+    elif(self.form_gui.window['option_repeatmessagetimes'].get() == 'x2'):
+      repeat_mode = cn.REPEAT_MESSAGE
+      num_times_repeat = 2
+    elif(self.form_gui.window['option_repeatmessagetimes'].get() == 'x3'):
+      repeat_mode = cn.REPEAT_MESSAGE
+      num_times_repeat = 3
+
     fragtagmsg = ''
     frag_string = self.frag(text, fragsize)
     self.resetReceivedStrings(self.tx_rig, self.tx_channel)
@@ -1410,19 +1469,33 @@ outbox dictionary items formatted as...
   """
   def getContentSendString(self, msgid, formname, priority, tolist, subject, frag_size, tagfile, version, sender_callsign):
     content = self.form_dictionary.getContentByIdFromOutboxDictionary(msgid)
+
+
+    content_string = ''
+    for x in range (len(content)):
+      if(x>0):
+        content_string = content_string + self.delimiter_char + str(content[x])
+      else:
+        content_string = content_string + str(content[x])
+    """ only process the content for escapes"""
+    content_string = self.getEncodeEscapes(content_string)
     
     
     send_string = '{' + cn.FORMAT_CONTENT + self.delimiter_char + msgid + self.delimiter_char + tolist + self.delimiter_char + priority + self.delimiter_char + \
                             str(frag_size)+ self.delimiter_char + subject + self.delimiter_char + formname + self.delimiter_char + version + self.delimiter_char 
                             
-    for x in range (len(content)):
-      if(x>0):
-        send_string = send_string + self.delimiter_char + str(content[x])
-      else:
-        send_string = send_string + str(content[x])
+    #for x in range (len(content)):
+    #  if(x>0):
+    #    send_string = send_string + self.delimiter_char + str(content[x])
+    #  else:
+    #    send_string = send_string + str(content[x])
+    send_string = send_string + content_string
+
+
 
     send_string = send_string + '}'
     send_string = self.getRunLengthEncode(send_string)
+
     fragtagmsg = self.buildFragTagMsg(send_string, frag_size, self.group_arq.getSendModeRig1(), sender_callsign)
     self.debug.info_message("buildFragTagMsg: " + fragtagmsg )
     self.deconstructFragTagMsg(fragtagmsg, self.group_arq.getSendModeRig1())
@@ -1577,6 +1650,10 @@ outbox dictionary items formatted as...
         split_string = remainder.split('{'  + cn.FORMAT_CONTENT + self.delimiter_char, 1)
         data_and_remainder = split_string[1].split('}', 1)
         rleDecodedString = self.getRunLengthDecode(data_and_remainder[0])
+
+        """ only process the content for escapes"""
+        rleDecodedString = self.getDecodeEscapes(rleDecodedString)
+
         data = rleDecodedString.split(self.delimiter_char)
 
         for x in range(len(data)):
@@ -1609,6 +1686,10 @@ outbox dictionary items formatted as...
         for x in range(7,len(data)):
           content.append(data[x])			
           self.debug.info_message("CONTENT is: " + data[x] )
+
+        #""" only process the content for escapes"""
+        #content = self.getDecodeEscapes(content)
+
 
         if(which_box == cn.UNKNOWN_BOX):
           if(self.testAnywhereOnReceiveList(msgto, self.getMyCall()) == True):
@@ -1990,6 +2071,8 @@ outbox dictionary items formatted as...
   def sendFormFldigi(self, message, tolist):
     self.debug.info_message("send form fldigi sending form: " + message )
 
+    self.setInSession(self.tx_rig, self.tx_channel, True)
+
     if(tolist != ''):
       recipient_stations = tolist.split(';')
       self.setRecipientStations(self.tx_rig, self.tx_channel, recipient_stations)
@@ -2043,7 +2126,12 @@ outbox dictionary items formatted as...
 
   def getRunLengthEncodeNackFldigi(self, message):
 
-    self.debug.info_message("getRunLengthEncodeNackFldigi\n")
+    self.debug.info_message("getRunLengthEncodeNackFldigi")
+
+    self.debug.info_message("getRunLengthEncodeNackFldigi message:" + str(message))
+
+    if(message == 'ALL'):
+      return message
 
     frames = message.split(',')
     rle_frames = ''
@@ -2132,6 +2220,9 @@ outbox dictionary items formatted as...
     return
 
   def sendAbort(self, from_callsign, group_name):
+
+    self.setInSession(self.tx_rig, self.tx_channel, False)
+
     self.debug.info_message("ABORT BUTTON PRESSED\n")
     self.group_arq.fldigiclient.abortTransmit()
     self.setCommStatus(self.tx_rig, self.tx_channel, cn.COMM_LISTEN)
@@ -2229,6 +2320,7 @@ outbox dictionary items formatted as...
     if(sendit == False):
       self.setCommStatus(self.tx_rig, self.tx_channel, cn.COMM_LISTEN)
     else:
+      self.debug.info_message("sendNack frames:" + str(frames))
       frames = self.getRunLengthEncodeNackFldigi(frames)
       nack_message = to_callsign + cn.COMM_NACK_MSG + '(' + frames + ') ' + from_callsign + ' '
       self.setCommStatus(self.tx_rig, self.tx_channel, cn.COMM_QUEUED_TXMSG)
@@ -2325,6 +2417,7 @@ outbox dictionary items formatted as...
     else:
       pre_message = ''
 
+    #resend_string = pre_message + pre_message + pre_message +pre_message + resend_string
     resend_string = pre_message + resend_string
 
     self.debug.info_message("RESEND FRAMES 2\n")
@@ -2405,15 +2498,27 @@ outbox dictionary items formatted as...
     missing_frames = self.getRunLengthDecodeNackFldigi(split_string2[0] ) +')'
 
     verified_missing_frames = ''
-    for frame_key in tx_strings:
-      trimmed_frame_key = frame_key.split('[',1)[1].split(',',1)[0]
-      self.debug.info_message("checking frame key: " + str(trimmed_frame_key) )
-      if(trimmed_frame_key + ',' in missing_frames or trimmed_frame_key + ')' in missing_frames or 'ALL' in missing_frames):
-        self.debug.info_message("adding to verified missing frames: " + str(trimmed_frame_key) )
+
+    if(split_string2[0] == 'All'):
+      self.debug.info_message("All fragments need to be re-transmitted")
+      for frame_key in tx_strings:
+        trimmed_frame_key = frame_key.split('[',1)[1].split(',',1)[0]
         if(verified_missing_frames == ''):
           verified_missing_frames = trimmed_frame_key
         else:
           verified_missing_frames = verified_missing_frames + ',' + trimmed_frame_key
+    else:
+    #if(True):
+      for frame_key in tx_strings:
+        trimmed_frame_key = frame_key.split('[',1)[1].split(',',1)[0]
+        self.debug.info_message("checking frame key: " + str(trimmed_frame_key) )
+        if(trimmed_frame_key + ',' in missing_frames or trimmed_frame_key + ')' in missing_frames or 'ALL' in missing_frames):
+          self.debug.info_message("adding to verified missing frames: " + str(trimmed_frame_key) )
+          if(verified_missing_frames == ''):
+            verified_missing_frames = trimmed_frame_key
+          else:
+            verified_missing_frames = verified_missing_frames + ',' + trimmed_frame_key
+
 
     self.debug.info_message("verified missing frames: " + str(verified_missing_frames) )
     self.resendFrames(verified_missing_frames, from_callsign, to_callsign)
@@ -2818,6 +2923,8 @@ outbox dictionary items formatted as...
         self.requestConfirm(self.getMyCall(), self.getSenderCall())
       else:
         #FIXME SEND THE EOS MESSAGE
+        self.setInSession(self.tx_rig, self.tx_channel, False)
+
         from_callsign = self.getMyCall()
         to_callsign = self.getMyGroup()
         self.setCommStatus(self.tx_rig, self.tx_channel, cn.COMM_QUEUED_TXMSG)
@@ -2827,6 +2934,8 @@ outbox dictionary items formatted as...
     else:
       """ abort station retransmits and move onto the next station """
       #FIXME SEND THE EOS MESSAGE
+      self.setInSession(self.tx_rig, self.tx_channel, False)
+
       from_callsign = self.getMyCall()
       to_callsign = self.getMyGroup()
       self.setCommStatus(self.tx_rig, self.tx_channel, cn.COMM_QUEUED_TXMSG)
@@ -3149,7 +3258,8 @@ outbox dictionary items formatted as...
           self.form_gui.window['in_inbox_errorframes'].update(missing_frames)
 
       """ There are no missing frames so the mssage should now decode"""
-      if(missing_frames == ''):
+      #if(missing_frames == ''):
+      if(missing_frames == '' and num_strings > 0):
         self.fldigiclient.resetReceiveString()
         from_callsign = self.getMyCall()
         to_callsign = self.getSenderCall()
@@ -3159,6 +3269,8 @@ outbox dictionary items formatted as...
         self.fldigiclient.resetReceiveString()
         from_callsign = self.getMyCall()
         to_callsign = self.getSenderCall()
+        if(missing_frames == ''):
+          missing_frames = 'ALL'
 
         stub = self.decodeAndSaveStub()
         self.processIncomingStubMessage(stub, received_strings)

@@ -75,8 +75,10 @@ class ReceiveControlsProc(object):
     self.flash_timer_group1 = 0
     self.flash_toggle_group1 = 0
     self.flash_buttons_group1 = {
-                                  'btn_compose_saam'     : ['False', 'red,green1', 'green1,red'],
-                                  'btn_compose_qrysaam'  : ['False', 'red,green1', 'green1,red'],
+                                  'btn_compose_saam'         : ['False', 'red,green1', 'green1,red', cn.STYLE_BUTTON, 'gray,white'],
+                                  'btn_compose_qrysaam'      : ['False', 'red,green1', 'green1,red', cn.STYLE_BUTTON, 'gray,white'],
+                                  'in_inbox_listentostation' : ['False', 'red,green1', 'green1,red', cn.STYLE_INPUT, 'white,gray'],
+                                  'text_mainarea_insession'  : ['False', 'red,green1', 'green1,red', cn.STYLE_TEXT, 'gray,white'],
                                 }
     
 
@@ -134,51 +136,47 @@ class ReceiveControlsProc(object):
 
    
   def event_catchall(self, values):
+#    return
+#  def event_catchall2(self, values):
 
+    if(self.group_arq.formdesigner_mode == True):
+      return
 
     if(self.window_initialized == False and self.form_gui.window != None):
       self.window_initialized = True		
-      """ select the initial category and form on the compose tab"""
-      self.form_gui.window['tbl_compose_categories'].update(select_rows=[0])
 
-      """ update the colors in the inbox"""
-      self.form_gui.window['table_inbox_messages'].update(values=self.group_arq.getMessageInbox() )
-      self.form_gui.window['table_inbox_messages'].update(row_colors=self.group_arq.getMessageInboxColors())
+      if(self.group_arq.formdesigner_mode == False):
 
-      self.form_gui.window['table_relay_messages'].update(values=self.group_arq.getMessageRelaybox() )
-      self.form_gui.window['table_relay_messages'].update(row_colors=self.group_arq.getMessageRelayboxColors())
+        """ set initial values only"""
+        """ select the initial category and form on the compose tab"""
+        self.form_gui.window['tbl_compose_categories'].update(select_rows=[0])
 
+        """ update the colors in the inbox"""
+        self.form_gui.window['table_inbox_messages'].update(values=self.group_arq.getMessageInbox() )
+        self.form_gui.window['table_inbox_messages'].update(row_colors=self.group_arq.getMessageInboxColors())
 
-      if(self.getSaamfram().tx_mode == 'JS8CALL'):
-        #combo_sendto = 'Rig 1 - JS8'.split(',')
-        self.form_gui.window['option_outbox_txrig'].update(values=['Rig 1 - JS8'])
-        self.form_gui.window['option_outbox_txrig'].update('Rig 1 - JS8')
-      elif(self.getSaamfram().tx_mode == 'FLDIGI'):
-        #combo_sendto = 'Rig 1 - JS8'.split(',')
-        self.form_gui.window['option_outbox_txrig'].update(values=['Rig 1 - FLDIGI'])
-        self.form_gui.window['option_outbox_txrig'].update('Rig 1 - FLDIGI')
+        self.form_gui.window['table_relay_messages'].update(values=self.group_arq.getMessageRelaybox() )
+        self.form_gui.window['table_relay_messages'].update(row_colors=self.group_arq.getMessageRelayboxColors())
 
-      #self.form_gui.window['tbl_compose_select_form'].update(select_rows=[0])
-
-      #FIXME THIS IS BROKEN!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-      #FIXME THIS IS BROKEN ALSO FOR FORM DEWSIGNER
-      #if(saam != None and saam.tx_mode == 'JS8CALL' and self.group_arq.formdesigner_mode == False):
-      #  self.group_arq.getSpeed()
+        if(self.getSaamfram().tx_mode == 'JS8CALL'):
+          self.form_gui.window['option_outbox_txrig'].update(values=['Rig 1 - JS8'])
+          self.form_gui.window['option_outbox_txrig'].update('Rig 1 - JS8')
+        elif(self.getSaamfram().tx_mode == 'FLDIGI'):
+          self.form_gui.window['option_outbox_txrig'].update(values=['Rig 1 - FLDIGI'])
+          self.form_gui.window['option_outbox_txrig'].update('Rig 1 - FLDIGI')
 
 
-    saam = self.getSaamfram()
-    #FIXME NEED TO TEST IF USING JS8 OR FLDIGI 
-    if(saam != None and saam.tx_mode == 'JS8CALL' and self.window_initialized == True):
-      saam.processSendJS8()
+    if(self.group_arq.formdesigner_mode == False and self.window_initialized == True):
+      saam = self.getSaamfram()
+      if(saam != None and saam.tx_mode == 'JS8CALL'):
+        saam.processSendJS8()
 
-      """ need to poll JS8Call to get the speed"""
-      #FIXME THIS IS BROKEN ALSO FOR FORM DEWSIGNER
-      if(self.refresh_timer <30):
-        self.refresh_timer = self.refresh_timer + 1
-      elif(self.refresh_timer >=30):
-        self.group_arq.getSpeed()
-        self.refresh_timer = 0
-
+        """ need to poll JS8Call to get the speed"""
+        if(self.refresh_timer <30):
+          self.refresh_timer = self.refresh_timer + 1
+        elif(self.refresh_timer >=30):
+          self.group_arq.getSpeed()
+          self.refresh_timer = 0
 
     if(self.group_arq.formdesigner_mode == False):
       if(self.flash_timer_group1 <6):
@@ -186,45 +184,76 @@ class ReceiveControlsProc(object):
       elif(self.flash_timer_group1 >=6):
         self.flash_timer_group1 = 0
 
-        if(self.window_initialized == True and self.form_gui.window['in_inbox_listentostation'].get().strip() == ''):
-          #self.form_gui.window['text_mainarea_connect_to'].update(text_color='Red')
-          self.form_gui.window['in_inbox_listentostation'].update(background_color = 'Red')
-        else:
-          #self.form_gui.window['text_mainarea_connect_to'].update(text_color='White')
-          self.form_gui.window['in_inbox_listentostation'].update(background_color = 'White')
-
         if(self.form_gui.window['in_inbox_listentostation'].get().strip() == ''):
-          self.changeFlashButtonState('btn_compose_qrysaam', True)
+          self.changeFlashButtonState('in_inbox_listentostation', True)
         else:
-          self.changeFlashButtonState('btn_compose_qrysaam', False)
+          self.changeFlashButtonState('in_inbox_listentostation', False)
+
+        if(self.getSaamfram().inSession() == True):
+          self.changeFlashButtonState('text_mainarea_insession', True)
+        else:
+          self.changeFlashButtonState('text_mainarea_insession', False)
+
+        if(self.flash_toggle_group1 == 0):
+          self.flash_toggle_group1 = 1
+        else:
+          self.flash_toggle_group1 = 0
 
         for key in self.flash_buttons_group1:
           button_colors = self.flash_buttons_group1.get(key)
           flash = button_colors[0]
           if(flash == 'True'):
-            if(self.flash_toggle_group1 == 0 and values != None):
-              self.flash_toggle_group1 = 1
+            if(self.flash_toggle_group1 == 0):
               button_on = button_colors[1].split(',')
               button_clr1_on = button_on[0]
               button_clr2_on = button_on[1]
-              self.form_gui.window[key].Update(button_color=(button_clr1_on, button_clr2_on))
+
+              if(button_colors[3] == cn.STYLE_BUTTON):
+                self.form_gui.window[key].Update(button_color=(button_clr1_on, button_clr2_on))
+              elif(button_colors[3] == cn.STYLE_INPUT):
+                self.form_gui.window[key].Update(background_color=button_clr1_on)
+              elif(button_colors[3] == cn.STYLE_TEXT):
+                self.form_gui.window[key].Update(text_color=button_clr1_on)
             else:
-              self.flash_toggle_group1 = 0
               button_off = button_colors[2].split(',')
               button_clr1_off = button_off[0]
               button_clr2_off = button_off[1]
-              self.form_gui.window[key].Update(button_color=(button_clr1_off, button_clr2_off))
+              if(button_colors[3] == cn.STYLE_BUTTON):
+                self.form_gui.window[key].Update(button_color=(button_clr1_off, button_clr2_off))
+              elif(button_colors[3] == cn.STYLE_INPUT):
+                self.form_gui.window[key].Update(background_color=button_clr1_off)
+              elif(button_colors[3] == cn.STYLE_TEXT):
+                self.form_gui.window[key].Update(text_color=button_clr1_off)
 	  
     return()
 
   def changeFlashButtonState(self, button_name, state):
-    button_colors = self.flash_buttons_group1.get(button_name)
-    button_on  = button_colors[1]
-    button_off = button_colors[2]
-    if(state == True):
-      self.flash_buttons_group1[button_name] = ['True', button_on, button_off]
-    elif(state == False):
-      self.flash_buttons_group1[button_name] = ['False', button_on, button_off]
+    try:
+      button_colors = self.flash_buttons_group1.get(button_name)
+      old_state  = button_colors[0]
+      button_on  = button_colors[1]
+      button_off = button_colors[2]
+      style      = button_colors[3]
+      atrestclr  = button_colors[4]
+      if(state == True and old_state == 'False'):
+        self.flash_buttons_group1[button_name] = ['True', button_on, button_off, style, atrestclr]
+      elif(state == False and old_state == 'True'):
+        self.flash_buttons_group1[button_name] = ['False', button_on, button_off, style, atrestclr]
+        atrestclr = button_colors[4].split(',')
+        clr1 = atrestclr[0]
+        clr2 = atrestclr[1]
+        if(button_colors[3] == cn.STYLE_BUTTON):
+          self.form_gui.window[button_name].Update(button_color=(clr1, clr2))
+        elif(button_colors[3] == cn.STYLE_INPUT):
+          self.form_gui.window[button_name].Update(background_color=clr1)
+        elif(button_colors[3] == cn.STYLE_TEXT):
+          self.form_gui.window[button_name].Update(text_color=clr1)
+
+    except:
+      self.debug.error_message("Exception in changeFlashButtonState: " + str(sys.exc_info()[0]) + str(sys.exc_info()[1] ))
+
+
+
 
   def updateSimulatedPreview(self, mytemplate):
 
@@ -418,10 +447,21 @@ class ReceiveControlsProc(object):
   def event_tmplt_loadsel(self, values):
     self.debug.info_message("EVENT TMPLT LOAD SELECTED FILE\n")
 
-    self.form_dictionary.readTemplateDictFromFile("my_test_tmplt.tpl")
+    line_index = int(values['tbl_layout_all_files'][0])
+    templatefiles = self.group_arq.getTemplateFiles()
+    filename = templatefiles[line_index][0]
+
+    #self.form_dictionary.readTemplateDictFromFile("my_test_tmplt.tpl")
+    self.form_dictionary.readTemplateDictFromFile(filename)
 
     self.form_gui.window['tbl_tmplt_categories'].update(self.group_arq.getCategories())
-    self.form_gui.window['tbl_compose_categories'].update(self.group_arq.getCategories())
+
+    self.form_gui.window['tbl_tmplt_files'].update(self.group_arq.getLoadedTemplateFiles())
+
+
+
+    if(self.group_arq.formdesigner_mode == False):
+      self.form_gui.window['tbl_compose_categories'].update(self.group_arq.getCategories())
 
     return
     
@@ -467,18 +507,18 @@ class ReceiveControlsProc(object):
 
 
   def event_tmplt_categories(self, values):
-    self.debug.info_message("EVENT TMPLT CATEGORIES\n")
+    self.debug.info_message("event_tmplt_categories")
     line_index = int(values['tbl_tmplt_categories'][0])
     category = (self.group_arq.getCategories()[line_index])[0]
 
     self.debug.info_message("category: " + category )
 
     self.form_dictionary.getTemplatesFromCategory(category)
+    self.form_gui.window['tbl_compose_select_form'].update(self.group_arq.getTemplates())
 
     self.current_edit_category = category
 
     self.form_gui.window['tbl_tmplt_templates'].update(self.group_arq.getTemplates())
-
     self.form_gui.window['in_tmpl_category_name'].update(category)
     
     return
@@ -722,7 +762,7 @@ class ReceiveControlsProc(object):
 
       ID = ''
 
-      self.debug.info_message("POST TO OUTBOX LOC1\n")
+      #self.debug.info_message("POST TO OUTBOX LOC1\n")
 
       if(self.group_arq.saamfram.isReply(fromform_ID)):
         mainID = self.group_arq.getOriginalSenderID(fromform_ID)
@@ -734,20 +774,21 @@ class ReceiveControlsProc(object):
       timestamp = self.group_arq.saamfram.getDecodeTimestampFromUniqueId(ID)
       msgfrom   = self.group_arq.saamfram.getDecodeCallsignFromUniqueId(ID)
 
-      self.debug.info_message("POST TO OUTBOX LOC2\n")
+      #self.debug.info_message("POST TO OUTBOX LOC2\n")
 
-      msgto = values['preview_message_msgto']
+      """ clean up the data pulled from the form. remove whitespace and uppercase it"""
+      msgto = values['preview_message_msgto'].strip().upper()
       subject = values['preview_form_subject']
       priority = values['preview_message_priority']
       formname = values['preview_form_type']	  
       content = self.form_gui.extractContentFromForm(values)
   
-      self.debug.info_message("POST TO OUTBOX LOC3\n")
+      #self.debug.info_message("POST TO OUTBOX LOC3\n")
   
       dictionary = self.form_dictionary.createOutboxDictionaryItem(ID, msgto, msgfrom, subject, priority, timestamp, formname, content)
       message_dictionary = dictionary.get(ID)		  
 
-      self.debug.info_message("POST TO OUTBOX LOC4\n")
+      #self.debug.info_message("POST TO OUTBOX LOC4\n")
 		  
       content   = message_dictionary.get('content')		  
       msgto     = message_dictionary.get('to')		  
@@ -759,19 +800,19 @@ class ReceiveControlsProc(object):
       self.group_arq.addMessageToOutbox(msgfrom, msgto, subject, timestamp, priority, msgtype, ID)
       self.form_gui.window['table_outbox_messages'].update(values=self.group_arq.getMessageOutbox() )
 
-      self.debug.info_message("POST TO OUTBOX LOC5\n")
+      #self.debug.info_message("POST TO OUTBOX LOC5\n")
 
       if(self.group_arq.saamfram.isReply(fromform_ID)):
         """ there is no need to refresh the inbox table as the item already exist this is just a sub page"""
         self.form_dictionary.addInboxDictionaryReply(mainID, replyID, msgto, msgfrom, subject, priority, timestamp, formname, content)
 
-      self.debug.info_message("POST TO OUTBOX LOC6\n")
+      #self.debug.info_message("POST TO OUTBOX LOC6\n")
 
       self.form_dictionary.writeOutboxDictToFile('outbox.msg')
     except:
       self.debug.error_message("Exception in event_prevposttooutbox: " + str(sys.exc_info()[0]) + str(sys.exc_info()[1] ))
 
-    self.debug.info_message("POST TO OUTBOX LOC7\n")
+    #self.debug.info_message("POST TO OUTBOX LOC7\n")
 
     return()
 
@@ -814,6 +855,27 @@ class ReceiveControlsProc(object):
 
     return
 
+  def event_tablerelayboxmessages(self, values):
+    self.debug.info_message("TABLE RELAYBOX MESSAGES\n")
+
+    line_index = int(values['table_relay_messages'][0])
+    msgid = (self.group_arq.getMessageRelaybox()[line_index])[6]
+    formname = self.form_dictionary.getFormnameFromRelayboxDictionary(msgid)
+
+    self.debug.info_message("MESSAGE ID AND FORMNAME = " + str(msgid) + "," + formname)
+
+    form_content = self.form_dictionary.getContentFromRelayboxDictionary(msgid)
+
+    mytemplate = self.form_dictionary.getTemplateByFormFromTemplateDictionary(formname)
+    use_dynamic_content_macro = False
+    text_render, table_data, actual_render = self.form_gui.renderPage(mytemplate, use_dynamic_content_macro, form_content)
+    
+    self.form_gui.window['table_relaybox_preview'].update(values=table_data )
+
+    return
+
+
+
   def event_outboxeditform(self, values):
     self.debug.info_message("OUTBOX EDIT FORM\n")
 
@@ -826,11 +888,16 @@ class ReceiveControlsProc(object):
     msgto     = (self.group_arq.getMessageOutbox()[line_index])[1]
     msgfrom   = (self.group_arq.getMessageOutbox()[line_index])[0]
     
+
     form_content = ['gfhjgfhj', 'asdf', 'gfhjgfhj', 'sadf']
 
     category, filename = self.form_dictionary.getCategoryAndFilenameFromFormname(formname)
 
     form_content = self.form_dictionary.getContentFromOutboxDictionary(ID)
+
+
+    """ create a new ID as this message is being edited."""
+    ID = self.saamfram.getEncodeUniqueId(self.saamfram.getMyCall())
    
     window = self.form_gui.createDynamicPopupWindow(formname, form_content, category, msgto, filename, ID, subject, False)
     dispatcher = PopupControlsProc(self, window)
@@ -1213,10 +1280,34 @@ class ReceiveControlsProc(object):
 
   def event_inboxcopyclipboard(self, values):
 
-    self.debug.info_message("EVENT COPY TO CLIPBOARD\n")
+    self.debug.info_message("event_inboxcopyclipboard")
+    text_table = self.form_gui.window['table_inbox_preview'].get()
+    self.debug.info_message("preview text is: " + str(text_table) )
 
-    a1 = "I am some text to be copied to the clipboard"
-    clip.copy(a1)
+    text = ''
+    for x in range(len(text_table)):
+      #self.debug.info_message("x is: " + str(x) )
+      #self.debug.info_message("adding: " + str(text_table[x][0]) )
+      text = text + text_table[x][0] + '\n'
+
+    self.debug.info_message("preview text is: " + str(text) )
+
+    clip.copy(text)
+
+  def event_outboxcopyclipboard(self, values):
+
+    self.debug.info_message("event_outboxcopyclipboard")
+
+    text_table = self.form_gui.window['table_outbox_preview'].get()
+
+    text = ''
+    for x in range(len(text_table)):
+      text = text + text_table[x][0] + '\n'
+
+    self.debug.info_message("preview text is: " + str(text) )
+
+    clip.copy(text)
+
 
   def event_outboximportfromclipboard(self, values):
 
@@ -1933,6 +2024,7 @@ MODE 23 - 8PSK125F,MODE 24 - PSK250R,MODE 25 - PSK63RC4,MODE 26 - DOMX22,MODE 27
       'btn_prev_post_to_outbox'   : event_prevposttooutbox,
       'table_outbox_messages'     : event_tableoutboxmessages,
       'table_inbox_messages'      : event_tableinboxmessages,
+      'table_relay_messages'   : event_tablerelayboxmessages,
       'btn_outbox_editform'       : event_outboxeditform,
       'btn_settings_list'         : event_settingslist,
       'tbl_compose_categories'    : event_compose_categories,
@@ -1957,6 +2049,7 @@ MODE 23 - 8PSK125F,MODE 24 - PSK250R,MODE 25 - PSK63RC4,MODE 26 - DOMX22,MODE 27
       'btn_inbox_sendacknack'     : event_inboxsendacknack,
       'btn_outbox_pleaseconfirm'  : event_outboxpleaseconfirm,
       'btn_inbox_copyclipboard'   : event_inboxcopyclipboard,
+      'btn_outbox_copytoclipboard'   : event_outboxcopyclipboard,
       'btn_outbox_importfromclipboard' :  event_outboximportfromclipboard,
       'btn_inbox_replytomsg'      : event_inboxreplytomsg,
       'btn_inbox_viewmsg'         : event_inboxviewmsg,

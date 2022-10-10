@@ -137,6 +137,8 @@ class FormDictionary(object):
 
   def getTemplatesFromCategory(self, category):
 
+    self.debug.info_message("getTemplatesFromCategory" )
+
     self.group_arq.clearTemplates()
 
     for file_key in self.template_file_dictionary_data:
@@ -147,20 +149,26 @@ class FormDictionary(object):
       description = ''
       version = 0
 
+      self.debug.info_message("getTemplatesFromCategory js: " + str(js))
+      self.debug.info_message("getTemplatesFromCategory category: " + str(category))
+
       data_dictionary = js.get(category)		  
 
-      for key in data_dictionary:
-        self.debug.info_message("form name: " + key )
-        data = data_dictionary.get(key)		  
+      self.debug.info_message("getTemplatesFromCategory data_dictionary: " + str(data_dictionary))
 
-        self.debug.info_message("data: " + str(data) )
+      if(data_dictionary != None):
+        for key in data_dictionary:
+          self.debug.info_message("form name: " + key )
+          data = data_dictionary.get(key)		  
 
-        version = data[0]		  
-        self.debug.info_message("version: " + str(version) )
-        description = data[1]
-        self.debug.info_message("description: " + description )
+          self.debug.info_message("data: " + str(data) )
 
-        self.group_arq.addTemplate(key, description, str(version), file_key)
+          version = data[0]		  
+          self.debug.info_message("version: " + str(version) )
+          description = data[1]
+          self.debug.info_message("description: " + description )
+
+          self.group_arq.addTemplate(key, description, str(version), file_key)
 
     return
 
@@ -569,6 +577,19 @@ class FormDictionary(object):
     content = dictionary.get('content')		  
     return content
 
+
+  def getPagesKeyvalFromOutboxDictionary(self, mainID):
+    self.debug.info_message("getPagesKeyvalFromOutboxDictionary")
+    parent_keyval = self.outbox_file_dictionary_data.get(mainID)
+
+    self.debug.info_message("parent_keyval: " + str(parent_keyval) )
+
+    self.debug.info_message("completed getPagesKeyvalFromOutboxDictionary")
+
+    return parent_keyval
+
+
+
   def getContentByIdFromOutboxDictionary(self, ID):
 
     message_dictionary = self.outbox_file_dictionary_data.get(ID)		  
@@ -750,9 +771,12 @@ class FormDictionary(object):
     return (self.inbox_file_dictionary_data)
 
   def getPagesKeyvalFromInboxDictionary(self, mainID):
-    self.debug.info_message("get pages keval from dictionary\n")
+    self.debug.info_message("getPagesKeyvalFromInboxDictionary")
     parent_keyval = self.inbox_file_dictionary_data.get(mainID)
-    self.debug.info_message("completed get pages keval from dictionary\n")
+
+    self.debug.info_message("parent_keyval: " + str(parent_keyval) )
+
+    self.debug.info_message("completed getPagesKeyvalFromInboxDictionary")
 
     return parent_keyval
 
@@ -961,12 +985,20 @@ class FormDictionary(object):
                            'Location'        : 'My QTH',} }
 
     auto_load_templates = js.get("params").get('AutoLoadTemplate')
+    params = js.get("params")
+
+    """ set these to hardcoded values for now """
+    params['Templates'] = [['ICS_Form_Templates.tpl', 'ICS Forms', 1.0], ["standard_templates.tpl", "Standard Forms", 1.0]]
+
     if(auto_load_templates):
       self.group_arq.clearCategories()
       templates = js.get("params").get('Templates')
       for x in range (len(templates)):
-        self.readTemplateDictFromFile(templates[x])
-        self.debug.info_message("LOADING TEMPLATE: " + templates[x] )
+        try:
+          self.readTemplateDictFromFile(templates[x][0])
+          self.debug.info_message("LOADING TEMPLATE: " + templates[x][0] )
+        except:
+          self.debug.info_message("UNABLE TO LOAD TEMPLATE: " + templates[x][0] )
 
     return(js)
 
@@ -974,12 +1006,13 @@ class FormDictionary(object):
   """ writes the messages to the messages file """
   def writeMainDictionaryToFile(self, filename, values):
 
-    if(self.group_arq.formdesigner_mode == True):
-      details = self.group_arq.saamfram.main_params
-    else:  
-      """ individual fields first """	  
-      details = { 'params': {
-                           'Templates'         : ['ICS_Form_Templates.tpl'],
+    details = self.group_arq.saamfram.main_params
+    params  = details.get("params")
+    params['Templates'] = self.group_arq.getLoadedTemplateFiles()
+
+    """ individual fields first """	  
+    details = { 'params': {
+                           'Templates'           : self.group_arq.getLoadedTemplateFiles(), #['ICS_Form_Templates.tpl'],
                            'UseAttachedGps'      : 'Rig1',
                            'AutoReceive'         : values['cb_mainwindow_autoacceptps'],
                            'AutoLoadTemplate'    : values['cb_settings_autoload'],

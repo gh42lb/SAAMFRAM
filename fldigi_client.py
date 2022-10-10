@@ -80,7 +80,8 @@ class FLDIGI_Client(object):
 
     self.pending_change = True
     self.current_mode = ''
-    self.requested_mode = 'QPSK500'
+    """ set the default for startup"""
+    self.requested_mode = 'PSK500R'
     self.current_channel = ''
     self.requested_channel = '1500'
 
@@ -202,7 +203,9 @@ class FLDIGI_Client(object):
         afc_search_range = self.server.modem.get_afc_search_range()
         self.debug.info_message("AFC search range: " + str(afc_search_range) )
 
-        self.server.main.set_afc(True)
+        """ set the AFC to false so that no drift """
+        #self.server.main.set_afc(True)
+        self.server.main.set_afc(False)
 
       except:
         time.sleep(5)
@@ -319,6 +322,13 @@ class FLDIGI_Client(object):
     return_data = ''
     if self.connected:
       try:		  
+
+        fldigimode = self.server.modem.get_name()
+        if(self.pending_change == False and self.current_mode == self.requested_mode and self.current_mode != fldigimode):
+          self.debug.info_message("getMsg changing mode to: " + str(fldigimode))
+          self.requested_mode = fldigimode
+          self.pending_change = True
+
         trx_state = self.server.main.get_trx_state()
         if trx_state == 'RX':
 

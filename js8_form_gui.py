@@ -76,7 +76,11 @@ def createInputElement(self, keyname, t1, text, width, height, pad, sub_layout):
     else:  
       line = [sg.InputText(t1 , size=(width, height), font=("Courier New", 9), key=keyname, pad=(0,0), border_width=1, expand_x=True )]
   else:
-    line = [sg.MLine(t1, size=(width, height), key=keyname, font=("Courier New", 9), autoscroll=True, pad=(0,0), border_width=1)]
+    if(width>0):
+      line = [sg.MLine(t1, size=(width, height), key=keyname, font=("Courier New", 9), autoscroll=True, pad=(0,0), border_width=1)]
+    else:
+      line = [sg.MLine(t1, size=(width, height), key=keyname, font=("Courier New", 9), autoscroll=True, pad=(0,0), border_width=1, expand_x=True)]
+
   return line
 
 def createSimInputElement(self, keyname, t1, text, width, height, pad, sub_layout):
@@ -563,6 +567,7 @@ class FormGui(object):
     'AG'    : 'Assignment / Location',
     'AH'    : 'Activity Log',
     'AI'    : 'Activity Log (ICS 214)',
+    'AJ'    : 'Attn',
 
     'B1'    : 'Basic Radio Channel Use',
     'B2'    : 'Branch',
@@ -573,6 +578,8 @@ class FormGui(object):
     'B5'    : '|',
     'B6'    : 'BLS',
     'B7'    : 'Burn Center',
+    'B8'    : 'Bulletin #',
+    'B9'    : 'Bulletin',
 
     'C1'    : 'Call Sign',
     'C2'    : 'Ch#',
@@ -613,6 +620,7 @@ class FormGui(object):
     'E1'    : 'Express Sender',
     'E2'    : 'Estimated',
     'E3'    : 'Eligible Users',
+    'E4'    : 'Email',
 
     'F1'    : 'From',
     'F2'    : 'For Operational Period',
@@ -624,6 +632,8 @@ class FormGui(object):
     'F8'    : 'Finance',
     'F9'    : 'Finance Section Chief Name',
     'FA'    : 'Frequency Band',
+    'FB'    : 'From (Name/Group)',
+    'FC'    : 'For (Name/Group)',
 
     'G1'    : 'Group',
     'G2'    : 'General Situational Awareness',
@@ -661,6 +671,7 @@ class FormGui(object):
     'IM'    : 'Individual Activity Log (ICS 214A)',
     'IN'    : 'ICS Section',
     'IO'    : 'ICS Position',
+    'IP'    : 'Information,Read Soon,READ NOW',
 
     'K1'    : 'Kind',
 
@@ -723,6 +734,7 @@ class FormGui(object):
     'PD'    : 'Prepared by (Operations Section Chief)',
 	
     'Q1'    : 'Qty',
+    'Q2'    : 'Quick Message',
 
     'R1'    : 'RX Freq',
     'R2'    : 'RX Tone',
@@ -760,6 +772,7 @@ class FormGui(object):
     'SG'    : 'Substitutes and / or Suggested Sources',
     'SH'    : 'Section Chief Name for Approval',
     'SI'    : 'Supplier Phone / Fax / Email',
+    'SJ'    : 'Send to Address',
     
     'T1'    : 'To (Name/Position)',
     'T2'    : 'Time',
@@ -791,6 +804,7 @@ class FormGui(object):
 
     'Y1'    : 'Yes',
     'Y2'    : 'Yes,No',
+    'Y3'    : 'Yes - Level',
     
     'Z1'    : 'Zone Grp',
 
@@ -1030,7 +1044,7 @@ class FormGui(object):
       tab_layout = tab_layout + [tab_line]
 
     pages = self.form_dictionary.getPagesKeyvalFromInboxDictionary(mainID)
-    if (len(pages)>1):
+    if (pages != None and len(pages)>1):
       self.debug.info_message("REPLY MULTI PAGE \n")
       for page_num in reversed (range(len(pages))):
         page_dictionary = pages.get(str(page_num))
@@ -1051,7 +1065,14 @@ class FormGui(object):
           tab_layout = tab_layout + [tab_line]
     else:
       self.debug.info_message("SINGLE PAGE\n")
-      page_dictionary = pages.get('0')
+
+      if(pages == None):
+        page_dictionary = self.form_dictionary.getPagesKeyvalFromOutboxDictionary(mainID)
+        self.debug.info_message("acquiring page+dictionary from outbox")
+      else:
+        page_dictionary = pages.get('0')
+        self.debug.info_message("acquiring page+dictionary from inbox pages(0)")
+
       retrieved_formname = page_dictionary.get('formname')
       content = page_dictionary.get('content')
       mytemplate = self.form_dictionary.getTemplateByFormFromTemplateDictionary(retrieved_formname)
@@ -1094,7 +1115,7 @@ class FormGui(object):
            sg.Text('MSGID:', size=(6, 1) ), 
            sg.InputText(message_id, size=(21, 1), key='preview_message_id', disabled=True ), 
            sg.Text('Priority:', size=(6, 1) ), 
-           sg.Combo(combo_list_priority, key='preview_message_priority', enable_events=True)],
+           sg.Combo(combo_list_priority, default_value=combo_list_priority[0], key='preview_message_priority', enable_events=True)],
           [sg.Text('To:', size=(7, 1) ), 
            sg.InputText(msgto, size=(66, 1), key='preview_message_msgto' )], 
           [sg.Text('Subject:', size=(7, 1) ), 
@@ -2080,7 +2101,7 @@ inbox dictionary items formatted as...
                             justification='left',
                             enable_events=True,
                             select_mode=sg.TABLE_SELECT_MODE_EXTENDED,
-                            num_rows=25, key='table_compose_preview', font=("Courier New", 10))],
+                            num_rows=cn.PREVIEW_NUM_ROWS_COMPOSE, key='table_compose_preview', font=("Courier New", 10))],
 
     ]
     
@@ -2099,10 +2120,15 @@ inbox dictionary items formatted as...
     combo_wide      = 'HF - 500,VHF/UHF - 1000,VHF/UHF - 2000,VHF/UHF - 3000'.split(',')
     combo_premsg    = 'Message IDs,Message Callsigns,Grid Square,GPS LATLONG,QTH'.split(',')
     combo_mode1     = 'SLOW,NORMAL,FAST,TURBO'.split(',')
-    if(self.group_arq.saamfram.fldigi_modes != ''):
-      combo_mode2     = self.group_arq.saamfram.fldigi_modes.split(',')
-    else:
-      combo_mode2     = ' , , , , , '.split(',')
+#    if(self.group_arq.saamfram.fldigi_modes != ''):
+#      combo_mode2     = self.group_arq.saamfram.fldigi_modes.split(',')
+#    else:
+#      combo_mode2     = ' , , , , , '.split(',')
+
+    combo_mode2 = 'MODE 5 - QPSK500,MODE 8 - BPSK500,MODE 13 - 8PSK125,MODE 14 - 8PSK250F,MODE 15 - 8PSK250FL,MODE 16 - PSK500R,\
+MODE 18 - QPSK250,MODE 19 - BPSK250,MODE 22 - 8PSK125FL,MODE 23 - 8PSK125F,MODE 24 - PSK250R,MODE 25 - PSK63RC4,MODE 26 - DOMX22,\
+MODE 28 - DOMX16'.split(',')
+
 
     mytemplate = 'my template'
     combo_fragtypes     = '10,20,30,40,50,60,80,100,120,140,160,180,200'.split(',')
@@ -2137,7 +2163,7 @@ Cont-4/500,Cont-16/1K,OLIVIA-4/1K'.split(',')
           [
            sg.Button('View', size=(11, 1), key='btn_inbox_viewmsg'),
            sg.Button('Copy', size=(11, 1), key='btn_inbox_copyclipboard'),
-           sg.Button('Paste', size=(11, 1), key='btn_inbox_pasteclipboard'),
+           sg.Button('Paste', size=(11, 1), key='btn_inbox_pasteclipboard', disabled = True),
            sg.Button('Delete', size=(11, 1), key='btn_inbox_deleteselected'),
            sg.Button('Delete All', size=(11, 1), key='btn_inbox_deleteall'),
            sg.Button('Query Msg', size=(11, 1), key='btn_inbox_querydoyouhaveacopy'),
@@ -2164,7 +2190,7 @@ Cont-4/500,Cont-16/1K,OLIVIA-4/1K'.split(',')
                             justification='left',
                             enable_events=True,
                             select_mode=sg.TABLE_SELECT_MODE_EXTENDED,
-                            num_rows=25, key='table_inbox_preview', font=("Courier New", 10))],
+                            num_rows=cn.PREVIEW_NUM_ROWS_INBOX, key='table_inbox_preview', font=("Courier New", 10))],
        
     ]
 
@@ -2173,6 +2199,8 @@ Cont-4/500,Cont-16/1K,OLIVIA-4/1K'.split(',')
                             max_col_width=65,
                             col_widths=[10, 12, 15, 15, 8, 7, 13, 7, 7, 7],
                             auto_size_columns=False,
+                            text_color='black',
+                            background_color='white',
                             justification='left',
                             enable_events=True,
                             select_mode=sg.TABLE_SELECT_MODE_EXTENDED,
@@ -2180,13 +2208,25 @@ Cont-4/500,Cont-16/1K,OLIVIA-4/1K'.split(',')
 
           [
            sg.Button('Copy', size=(11, 1), key='btn_relay_copytoclipboard'),
-           sg.Button('Paste', size=(11, 1), key='btn_relay_pastefromclipboard'),
+           sg.Button('Paste', size=(11, 1), key='btn_relay_pastefromclipboard', disabled = True),
            sg.Button('Delete', size=(11, 1), key='btn_relaybox_deleteselected'),
            sg.Button('Delete All', size=(11, 1), key='btn_relaybox_deleteall'),
            sg.Button('Add to Outbox', size=(11, 1), key='btn_relay_copytooutbox'),
            sg.Button('Query Msg', size=(11, 1), key='btn_relay_querymessageorfragments'),
            sg.Button('Request Msg', size=(11, 1), key='btn_relay_sendreqm'),
            sg.Button('Request CRC', size=(11, 1), key='btn_relay_requestchecksums')],
+
+          [sg.Table(values=[], headings=['Preview'],
+                            max_col_width=116,
+                            col_widths=[116],
+                            auto_size_columns=False,
+                            text_color='black',
+                            background_color='white',
+                            justification='left',
+                            enable_events=True,
+                            select_mode=sg.TABLE_SELECT_MODE_EXTENDED,
+                            num_rows=cn.PREVIEW_NUM_ROWS_RELAYBOX, key='table_relaybox_preview', font=("Courier New", 10))],
+
 
     ]
 
@@ -2200,6 +2240,8 @@ Cont-4/500,Cont-16/1K,OLIVIA-4/1K'.split(',')
                             max_col_width=65,
                             col_widths=[10, 20, 25, 20, 8, 7, 15],
                             auto_size_columns=False,
+                            text_color='black',
+                            background_color='white',
                             justification='left',
                             enable_events=True,
                             select_mode=sg.TABLE_SELECT_MODE_EXTENDED,
@@ -2208,7 +2250,7 @@ Cont-4/500,Cont-16/1K,OLIVIA-4/1K'.split(',')
          [
           sg.Button('View',   key='btn_outbox_viewform', size=(11, 1) ), 
           sg.Button('Copy',   key='btn_outbox_copytoclipboard', size=(11, 1) ), 
-          sg.Button('Paste',   key='btn_outbox_pastefromclipboard', size=(11, 1) ), 
+          sg.Button('Paste',   key='btn_outbox_pastefromclipboard', size=(11, 1), disabled = True ), 
           sg.Button('Edit',   key='btn_outbox_editform', size=(11, 1) ), 
           sg.Button('Delete',   key='btn_outbox_deletemsg', size=(11, 1) ), 
           sg.Button('Delete All',   key='btn_outbox_deleteallmsg', size=(11, 1) ), 
@@ -2220,9 +2262,9 @@ Cont-4/500,Cont-16/1K,OLIVIA-4/1K'.split(',')
           sg.CBox('Pre Message:',  key='cb_outbox_includepremsg' ), 
           sg.OptionMenu(combo_premsg, default_value=combo_premsg[0], key='option_outbox_premessage', visible=False),
           sg.CBox('Repeat Message',  key='cb_outbox_repeatmsg' ), 
-          sg.OptionMenu(combo_numtimes_msg, default_value=combo_numtimes_msg[0], key='option_repeatmessagetimes'),
-          sg.CBox('Repeat Fragments',  key='cb_outbox_repeatfrag' ), 
-          sg.OptionMenu(combo_numtimes_frag, default_value=combo_numtimes_frag[0], key='option_repeatfragtimes'),
+          sg.Combo(combo_numtimes_msg, default_value=combo_numtimes_msg[0], key='option_repeatmessagetimes'),
+          sg.CBox('Repeat Fragments',  key='cb_outbox_repeatfrag', visible = True if (self.group_arq.send_mode_rig1 == cn.SEND_JS8CALL) else False ), 
+          sg.OptionMenu(combo_numtimes_frag, default_value=combo_numtimes_frag[0], key='option_repeatfragtimes', visible = True if (self.group_arq.send_mode_rig1 == cn.SEND_JS8CALL) else False),
           sg.CBox('Include Template', key='cb_outbox_includetmpl'),
           sg.Text('Fragment Size:' ), 
           sg.OptionMenu(combo_fragtypes, default_value=combo_fragtypes[2], key='option_framesize')],
@@ -2235,10 +2277,12 @@ Cont-4/500,Cont-16/1K,OLIVIA-4/1K'.split(',')
                             max_col_width=116,
                             col_widths=[116],
                             auto_size_columns=False,
+                            text_color='black',
+                            background_color='white',
                             justification='left',
                             enable_events=True,
                             select_mode=sg.TABLE_SELECT_MODE_EXTENDED,
-                            num_rows=20, key='table_outbox_preview', font=("Courier New", 10))],
+                            num_rows=cn.PREVIEW_NUM_ROWS_OUTBOX, key='table_outbox_preview', font=("Courier New", 10))],
        ] 
 
     self.layout_sent = [
@@ -2246,6 +2290,8 @@ Cont-4/500,Cont-16/1K,OLIVIA-4/1K'.split(',')
                             max_col_width=65,
                             col_widths=[10, 17, 20, 20, 8, 7, 13, 7],
                             auto_size_columns=False,
+                            text_color='black',
+                            background_color='white',
                             justification='left',
                             enable_events=True,
                             select_mode=sg.TABLE_SELECT_MODE_EXTENDED,
@@ -2259,10 +2305,12 @@ Cont-4/500,Cont-16/1K,OLIVIA-4/1K'.split(',')
                             max_col_width=116,
                             col_widths=[116],
                             auto_size_columns=False,
+                            text_color='black',
+                            background_color='white',
                             justification='left',
                             enable_events=True,
                             select_mode=sg.TABLE_SELECT_MODE_EXTENDED,
-                            num_rows=25, key='table_sent_preview', font=("Courier New", 10))],
+                            num_rows=cn.PREVIEW_NUM_ROWS_SENT, key='table_sent_preview', font=("Courier New", 10))],
        ] 
 
     self.layout_template = self.createFormDesignerPage()
@@ -2427,14 +2475,14 @@ Cont-4/500,Cont-16/1K,OLIVIA-4/1K'.split(',')
                         sg.InputText('', size=(30, 1), key='in_mainwindow_activetxchannel', visible = False ), 
 
                         sg.Text('Fldigi Mode:', size=(5, 1), visible = True if (self.group_arq.send_mode_rig1 == cn.SEND_FLDIGI) else False ), 
-                        sg.Combo(combo_mode2, default_value=combo_mode2[4], key='option_outbox_fldigimode', enable_events = True, visible = True if (self.group_arq.send_mode_rig1 == cn.SEND_FLDIGI) else False),
+                        sg.Combo(combo_mode2, default_value=combo_mode2[5], key='option_outbox_fldigimode', enable_events = True, visible = True if (self.group_arq.send_mode_rig1 == cn.SEND_FLDIGI) else False),
 
                         sg.Text('Channel:' ), 
                         sg.Combo(combo_channels, key='combo_settings_channels', default_value=combo_channels[8], enable_events=True),
 
                         sg.Text('Send To:', size=(7, 1) ), 
                         sg.Combo(combo_sendto, default_value=combo_sendto[0], key='option_outbox_txrig'),
-                        sg.Text('Width:', size=(7, 1) ), 
+                        sg.Text('Span:', size=(7, 1) ), 
                         sg.Combo(combo_wide, default_value=combo_wide[0], key='combo_main_signalwidth', enable_events=True)],
  
                        [
@@ -2443,7 +2491,8 @@ Cont-4/500,Cont-16/1K,OLIVIA-4/1K'.split(',')
                        
                         sg.Text('Connect To: ', key='text_mainarea_connect_to'),
                         sg.InputText('', key='in_inbox_listentostation', size=(20, 1), disabled=False),
-                        sg.CBox('Auto Receive', key='cb_mainwindow_autoacceptps', default = js.get("params").get('AutoReceive'))],
+                        sg.CBox('Auto Receive', key='cb_mainwindow_autoacceptps', default = js.get("params").get('AutoReceive')),
+                        sg.Text('--In Session--', size=(12, 1), key='text_mainarea_insession', font=("Helvetica", 20), expand_x=True, justification = 'right', text_color='gray' )], 
 
                        [ sg.Text('Fldigi mode: ', size=(15, 1) , visible = False      ), 
                          sg.Combo(combo_fldigi_modes, key='combo_settings_fldigimoode1', enable_events=True, visible = False),
@@ -2464,10 +2513,12 @@ Cont-4/500,Cont-16/1K,OLIVIA-4/1K'.split(',')
                              sg.Tab('Colors', self.layout_colors, title_color='Black', background_color=js.get("params").get('ColorsTabClr')),
                              sg.Tab('Settings', self.layout_settings, title_color='Black', background_color=js.get("params").get('SettingsTabClr')) ]],
                        tab_location='centertop',
-                       title_color='Blue', tab_background_color='Dark Gray', background_color='Dark Gray', size=(940, 500), selected_title_color='Black', selected_background_color='White', key='tabgrp_main' )], [sg.Button('Exit')]]  
+                       #title_color='Blue', tab_background_color='Dark Gray', background_color='Dark Gray', size=(940, 500), selected_title_color='Black', selected_background_color='White', key='tabgrp_main' )], [sg.Button('Exit')]]  
+                       title_color='Blue', tab_background_color='Dark Gray', background_color='Dark Gray', size=(940, 450), selected_title_color='Black', selected_background_color='White', key='tabgrp_main' )], [sg.Button('Exit')]]  
 
 
-    self.window = sg.Window("SAAM-MAIL de WH6GGO. v1.0.1 Beta", self.tabgrp, default_element_size=(40, 1), grab_anywhere=False, disable_close=True)                       
+    #self.window = sg.Window("SAAM-MAIL de WH6GGO. v1.0.2 Beta", self.tabgrp, default_element_size=(40, 1), grab_anywhere=False, disable_close=True, use_custom_titlebar = True, keep_on_top=False, force_toplevel=False, titlebar_background_color='green1', titlebar_text_color='Red')                       
+    self.window = sg.Window("SAAM-MAIL de WH6GGO. v1.0.2 Beta", self.tabgrp, default_element_size=(40, 1), grab_anywhere=False, disable_close=True)                       
 
     return (self.window)
 
