@@ -1,3 +1,17 @@
+
+## Saamfram Protocol Design Goals:
+* Group Communication of Forms: Produce a data efficient protocol for sending forms to multiple stations simultaneously in a group setting with efficient round robin verification and re-transmit process. Protocol supports Peer to Peer, Peer to Group, Group to Peer and Group to Group.
+* Critical Messages: Enables transfer of fully verified, error-corrected emails/forms/messages in real time.
+* Notifications: Provide an efficient mechanism for group notification of any pending messages waiting to be sent out.
+* Flexibility: Incorporate multiple message delivery techniques including push, pull, store and forward, relay, active session, passive mode.
+* Content Only: Separate out the pre-existing form information such as form layout and text field information from the form content thus significantly reducing the amount of data that needs to be sent with any ICS form message transfer. Content only delivery of forms reduces message length significantly and increases performance, reliability and resilience.
+* Data Compression: Run Length Encoding is used for content data and Dictionary Compression for form templates. These techniques significantly reduce the amount of data that needs to be transmitted when sending forms. This provides an additional reduction to the average message length and further increases performance, reliability and resilience.
+* Increased Performance and Resilience: Multiple techniques have been incorporated. When used in combination, these provide a highly accurate and efficient RF data transfer mode that can be used with a variety of digital modes and Ham Radio bands including the lower HF bands (160/80/60/40/30m) where reliable communication can be problematic.
+* When used in conjunction with JS8/JS8Call it is also possible to receive form transmissions passively from multiple stations simultaneously. These capabilites make it possible to send form messages Peer to Peer, Peer to Group, Group to Peer and Group to Group. These capabilities provide the basis for a new set of tools for ham radio operators to complement the existing Peer to Peer and Peer to Gateway approaches. 
+
+
+## Copyright/License
+
 MIT License
 
 Copyright (c) 2022 Lawrence Byng
@@ -21,109 +35,3 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 
 
-
-SAAM_MAIL v1.0 Beta release de WH6GGO
-
-Designed and developed by Lawrence Byng
-
-SAAM_MAIL is designed to provide group form transfer / email capabilities over Ham Radio using the SAAMFRAM protocol
-
-A quick overview of some of the main features:
-
-    • Email like interface with inbox, outbox, relay box and sent box
-    • Fragmentation of messages to allow active session based transfer or passive sessionless transfer
-    • CRC checksums to verify accurate message delivery
-    • Use of 'stub' messages to notify the group of any messages waiting to be sent.
-    • support for a wide variety of underlying modulations including JS8, PSK, QPSK, BPSK, DominoEX, 8PSK and Olivia
-    • Form designer capability with many pre-built ICS form templates included.
-    • Data efficient protocol for increased performance and resilience to adverse band conditions.
-    • Capable of Peer to Peer, Peer to Group, Group to Peer and Group to Group mode communications.
-    • Data compression using a variety of techniques such as dictionary compression and run length encoding.
-    • Separation of form content from form template information allowing transfer of only the data content portion. 
-    • Support for JS8Call and FLDIGI applications
-
-
-Quick start guide
-=================
-
-STEP 1 configure for JS8Call or FLdigi
-======================================
-Perform step 1a or 1b as appropriate as desribed below...
-
-STEP 1a JS8call configuration:
-==============================
-make sure JS8Call is configured as follows
-
-1) Mode menu/Enable Auto Reply - checked
-This setting is required for the text transfers between js8call and saam_mail to function correctly
-
-2) File/Settings/Reporting tab
-    • under the API section:
-    • TCP Server Hostname: 127.0.0.1   Enable TCP Server API - checked
-    • TCP Server Port:     2442        Accept TCP Requests   - checked
-    • TCP Max Connections: 1 or 2
-
-3) When you are ready to transmit, adjust the mode speed in JS8 as required (slow, normal, fast, turbo) and make sure
- the TX button at the top right is enabled.
-
-
-STEP 1b FLDIGI configuration:
-=============================
-1) Make sure Fldigi XML-RPC external api is enabled and the ip and port set to 127.0.0.1 and 7362 respectively
-
-
-STEP 2a running from binary files
-=================================
-
-Windows
-=======
-download saam_mail.exe and ICS_Form_Templates.tpl to your chosen folder
-
-run the program with: .\saam_mail.exe --opmode=fldigi
-
-Raspberry pi
-============
-download saam_mail and ICS_Form_Templates.tpl to your chosen folder
-change file to executeable: sudo chmod +x ./saam_mail
-
-run the program with: ./saam_mail --opmode=fldigi
-
-
-STEP 2b running from .py files
-=============================
-
-    • download the saam-mail python files into your chosen directory
-
-    • make sure python 3 is installed along with the following modules...
-
-PySimpleGUI, sys, threading, json, random, getopt, datetime, socket, time, select, calendar, gps, crc
-
-this can be done using the pip3 command for any missing modules. for example...
-
-#pip3 install pysimplegui
-
-
-please note saam_mail is available for python 3 only.
-
-    • now run the application: python3 ./samm_mail.py --opmode=fldigi
-
-    • or: python3 ./samm_mail.py --opmode=js8call
-
-
-if everything is installed correctly, samm_mail will connect to fldigi or js8call and display the main window.
-
-Now go to the settings tab and fill out your information.
-At a minimum, this must include your call sign and chosen group name.
-Also make sure one of the template files is loaded into the application on the settings tab
-
-Now you can go to the compose tab and compose a message and send to the group.
-
-
-
-For more information please refer to the ssamfram protocol document PROTOCOL.pdf
-
-
-
-enjoy :)
-
-73 de WH6GGO
